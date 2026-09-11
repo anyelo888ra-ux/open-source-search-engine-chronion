@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultados - Chronioñ</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #0f172a; color: #f8fafc; padding: 20px; }
+        header { display: flex; align-items: center; gap: 20px; padding-bottom: 20px; border-bottom: 1px solid #334155; margin-bottom: 25px; }
+        .logo { font-size: 1.8rem; font-weight: 700; color: #38bdf8; text-decoration: none; }
+        .logo span { color: #f43f5e; }
+        .search-box { display: flex; gap: 10px; width: 100%; max-width: 500px; }
+        input[type="text"] { flex: 1; padding: 10px 16px; font-size: 1rem; border-radius: 20px; border: 2px solid #334155; background-color: #1e293b; color: #fff; outline: none; }
+        button { padding: 10px 20px; border-radius: 20px; border: none; background-color: #38bdf8; color: #0f172a; font-weight: 600; cursor: pointer; }
+        .results-container { max-width: 700px; margin-left: 10px; }
+        .result-item { margin-bottom: 24px; }
+        .result-url { font-size: 0.85rem; color: #94a3b8; margin-bottom: 4px; }
+        .result-title { font-size: 1.2rem; color: #38bdf8; text-decoration: none; display: inline-block; margin-bottom: 6px; }
+        .result-title:hover { text-decoration: underline; }
+        .result-snippet { font-size: 0.95rem; color: #cbd5e1; line-height: 1.4; }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="index.html" class="logo">Chronio<span>ñ</span></a>
+        <form class="search-box" action="search.html" method="GET">
+            <input type="text" id="searchInput" name="q" required>
+            <button type="submit">Buscar</button>
+        </form>
+    </header>
+
+    <main class="results-container" id="results">
+        <!-- Los resultados renderizados por JavaScript aparecerán aquí -->
+    </main>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const query = urlParams.get('q');
+        
+        if (query) {
+            document.getElementById('searchInput').value = query;
+            document.title = `${query} - Búsqueda en Chronioñ`;
+            
+            // Simulación temporal de resultados hasta conectar la API backend
+            const container = document.getElementById('results');
+            container.innerHTML = `
+                <p style="color: #64748b; margin-bottom: 20px;">Mostrando resultados para: <strong>${query}</strong></p>
+                
+                <div class="result-item">
+                    <div class="result-url">https://github.com/anyelo888ra-ux/chronion-browser</div>
+                    <a href="https://github.com/anyelo888ra-ux/chronion-browser" class="result-title">Chronioñ Browser para PC (Python)</a>
+                    <div class="result-snippet">Navegador web ultra ligero, minimalista y rápido desarrollado completamente en Python.</div>
+                </div>
+
+                <div class="result-item">
+                    <div class="result-url">https://github.com/anyelo888ra-ux/chronion.apk-open-source</div>
+                    <a href="https://github.com/anyelo888ra-ux/chronion.apk-open-source" class="result-title">Chronioñ Browser para Android (Kotlin)</a>
+                    <div class="result-snippet">Navegador web nativo para Android creado con Jetpack Compose y Kotlin.</div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
