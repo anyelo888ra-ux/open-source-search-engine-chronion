@@ -9,7 +9,7 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
         body { background-color: #202124; color: #bdc1c6; min-height: 100vh; display: flex; flex-direction: column; }
         
-        /* Header Estilo Google */
+        /* Header Estilo Google Dark */
         header { display: flex; align-items: center; padding: 16px 24px; border-bottom: 1px solid #3c4043; gap: 24px; }
         .logo-link { height: 30px; display: flex; align-items: center; text-decoration: none; }
         .logo-link img { height: 100%; width: auto; }
@@ -38,7 +38,7 @@
         .status-text { font-size: 14px; color: #9aa0a6; margin-bottom: 20px; }
 
         .result-item { margin-bottom: 28px; }
-        .result-site { font-size: 12px; color: #bdc1c6; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+        .result-site { font-size: 12px; color: #bdc1c6; margin-bottom: 4px; word-break: break-all; }
         .result-title { font-size: 20px; color: #8ab4f8; text-decoration: none; display: inline-block; margin-bottom: 6px; }
         .result-title:hover { text-decoration: underline; }
         .result-snippet { font-size: 14px; color: #bdc1c6; line-height: 1.5; }
@@ -81,49 +81,85 @@
         if (query) {
             document.getElementById('searchInput').value = query;
             document.title = `${query} - Búsqueda en Chronioñ`;
-            fetchResults(query);
+            fetchDuckDuckGo(query);
         } else {
             statusEl.innerText = 'Escribe algo en la barra para buscar.';
         }
 
-        // Función para consultar resultados automáticamente
-        async function fetchResults(searchQuery) {
-            try {
-                // API pública de búsqueda en español
-                const response = await fetch(`https://es.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(searchQuery)}&format=json&origin=*`);
-                const data = await response.json();
-                
-                const searchResults = data.query.search;
-                
-                if (searchResults.length === 0) {
-                    statusEl.innerText = `No se encontraron resultados para "${searchQuery}".`;
-                    return;
-                }
+        function fetchDuckDuckGo(searchQuery) {
+            // Callback global para procesar la respuesta de la API de DuckDuckGo
+            window.handleDDGResponse = function(data) {
+                let htmlContent = '';
+                let totalResults = 0;
 
-                statusEl.innerText = `Cerca de ${searchResults.length * 120} resultados encontrados para "${searchQuery}"`;
-
-                let htmlContent = `<div class="status-text">${statusEl.innerText}</div>`;
-
-                searchResults.forEach(item => {
-                    const title = item.title;
-                    const snippet = item.snippet.replace(/<span class="searchmatch">/g, '<b>').replace(/<\/span>/g, '</b>');
-                    const pageUrl = `https://es.wikipedia.org/wiki/${encodeURIComponent(title.replace(/ /g, '_'))}`;
-
+                // 1. Respuesta directa (Instant Answer) si existe
+                if (data.AbstractText && data.AbstractURL) {
+                    totalResults++;
                     htmlContent += `
-                        <div class="result-item">
-                            <div class="result-site">🌐 ${pageUrl}</div>
-                            <a href="${pageUrl}" class="result-title" target="_blank">${title}</a>
-                            <div class="result-snippet">${snippet}...</div>
+                        <div class="result-item" style="border-left: 3px solid #8ab4f8; padding-left: 12px;">
+                            <div class="result-site">🌐 ${data.AbstractURL}</div>
+                            <a href="${data.AbstractURL}" class="result-title" target="_blank">${data.Heading}</a>
+                            <div class="result-snippet">${data.AbstractText}</div>
                         </div>
                     `;
-                });
+                }
 
-                container.innerHTML = htmlContent;
+                // 2. Temas y resultados web variados
+                if (data.RelatedTopics && data.RelatedTopics.length > 0) {
+                    data.RelatedTopics.forEach(topic => {
+                        if (topic.FirstURL && topic.Text) {
+                            totalResults++;
+                            const titleParts = topic.Text.split(' - ');
+                            const title = titleParts[0] || searchQuery;
 
-            } catch (error) {
-                console.error("Error al obtener búsquedas:", error);
-                statusEl.innerText = 'Ocurrió un error al cargar los resultados de la red.';
-            }
+                            htmlContent += `
+                                <div class="result-item">
+                                    <div class="result-site">🌐 ${topic.FirstURL}</div>
+                                    <a href="${topic.FirstURL}" class="result-title" target="_blank">${title}</a>
+                                    <div class="result-snippet">${topic.Text}</div>
+                                </div>
+                            `;
+                        } else if (topic.Topics) {
+                            // Subtemas agrupados
+                            topic.Topics.forEach(subTopic => {
+                                if (subTopic.FirstURL && subTopic.Text) {
+                                    totalResults++;
+                                    htmlContent += `
+                                        <div class="result-item">
+                                            <div class="result-site">🌐 ${subTopic.FirstURL}</div>
+                                            <a href="${subTopic.FirstURL}" class="result-title" target="_blank">${subTopic.Text.split(' - ')[0]}</a>
+                                            <div class="result-snippet">${subTopic.Text}</div>
+                                        </div>
+                                    `;
+                                }
+                            });
+                        }
+                    });
+                }
+
+                // Si no hay resultados directos, ofrece redirección web abierta
+                if (totalResults === 0) {
+                    statusEl.innerText = `Mostrando acceso directo para "${searchQuery}"`;
+                    container.innerHTML = `
+                        <div class="result-item">
+                            <div class="result-site">🌐 https://duckduckgo.com/?q=${encodeURIComponent(searchQuery)}</div>
+                            <a href="https://duckduckgo.com/?q=${encodeURIComponent(searchQuery)}" class="result-title" target="_blank">Buscar "${searchQuery}" en la Web Abierta</a>
+                            <div class="result-snippet">Haz clic para consultar todas las coincidencias globales en la red.</div>
+                        </div>
+                    `;
+                } else {
+                    statusEl.innerText = `Cerca de ${totalResults * 15} resultados para "${searchQuery}"`;
+                    container.innerHTML = `<div class="status-text">${statusEl.innerText}</div>` + htmlContent;
+                }
+            };
+
+            // Inyección de script dinámico para bypass de CORS vía JSONP
+            const script = document.createElement('script');
+            script.src = `https://api.duckduckgo.com/?q=${encodeURIComponent(searchQuery)}&format=json&pretty=1&callback=handleDDGResponse`;
+            script.onerror = function() {
+                statusEl.innerText = 'Error al obtener respuesta del motor de búsqueda.';
+            };
+            document.body.appendChild(script);
         }
     </script>
 </body>
