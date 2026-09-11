@@ -30,12 +30,27 @@
 
         /* Navegación por pestañas */
         .nav-tabs { display: flex; gap: 20px; padding: 12px 160px; border-bottom: 1px solid #3c4043; font-size: 14px; }
-        .tab { color: #9aa0a6; text-decoration: none; padding-bottom: 8px; border-bottom: 3px solid transparent; }
+        .tab { color: #9aa0a6; text-decoration: none; padding-bottom: 8px; border-bottom: 3px solid transparent; cursor: pointer; }
         .tab.active { color: #8ab4f8; border-color: #8ab4f8; font-weight: 500; }
+        .tab.ai-tab { color: #c2e7ff; background: linear-gradient(90deg, #a8c7fa, #d3e3fd); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: bold; }
 
         /* Contenedor de Resultados */
-        .results-container { max-width: 650px; margin-left: 160px; padding: 20px 0; flex: 1; }
+        .results-container { max-width: 680px; margin-left: 160px; padding: 20px 0; flex: 1; }
         .status-text { font-size: 14px; color: #9aa0a6; margin-bottom: 20px; }
+
+        /* Estilos del Bloque Modo IA (AI Overview) */
+        .ai-overview-card {
+            background: #1e1f20;
+            border: 1px solid #3c4043;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        .ai-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-weight: 600; color: #8ab4f8; font-size: 15px; }
+        .ai-sparkle { font-size: 16px; }
+        .ai-content { font-size: 15px; color: #e8eaed; line-height: 1.6; }
+        .ai-sources { margin-top: 12px; padding-top: 10px; border-top: 1px solid #2e3134; font-size: 12px; color: #9aa0a6; }
 
         .result-item { margin-bottom: 28px; }
         .result-site { font-size: 12px; color: #bdc1c6; margin-bottom: 4px; word-break: break-all; }
@@ -62,14 +77,15 @@
     </header>
 
     <div class="nav-tabs">
-        <a href="#" class="tab active">Todo</a>
-        <a href="#" class="tab">Imágenes</a>
-        <a href="#" class="tab">Vídeos</a>
-        <a href="#" class="tab">Noticias</a>
+        <a class="tab active" onclick="switchTab(event, 'todo')">Todo</a>
+        <a class="tab ai-tab" onclick="switchTab(event, 'modo-ia')">✨ Modo IA</a>
+        <a class="tab" onclick="switchTab(event, 'imagenes')">Imágenes</a>
+        <a class="tab" onclick="switchTab(event, 'videos')">Vídeos</a>
+        <a class="tab" onclick="switchTab(event, 'noticias')">Noticias</a>
     </div>
 
     <main class="results-container" id="results">
-        <div class="status-text" id="status">Cargando resultados de la web...</div>
+        <div class="status-text" id="status">Cargando respuesta en vivo...</div>
     </main>
 
     <script>
@@ -77,22 +93,91 @@
         const query = urlParams.get('q');
         const container = document.getElementById('results');
         const statusEl = document.getElementById('status');
+        let currentMode = 'todo';
 
         if (query) {
             document.getElementById('searchInput').value = query;
             document.title = `${query} - Búsqueda en Chronioñ`;
-            fetchDuckDuckGo(query);
+            fetchSearch(query);
         } else {
             statusEl.innerText = 'Escribe algo en la barra para buscar.';
         }
 
-        function fetchDuckDuckGo(searchQuery) {
-            // Callback global para procesar la respuesta de la API de DuckDuckGo
+        function switchTab(event, tabName) {
+            event.preventDefault();
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            currentMode = tabName;
+
+            if (tabName === 'todo' || tabName === 'modo-ia') {
+                if (query) fetchSearch(query);
+            } else {
+                statusEl.innerText = '';
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 50px 20px;">
+                        <h2 style="color: #8ab4f8; font-size: 24px; margin-bottom: 10px;">🚧 Próximamente</h2>
+                        <p style="color: #9aa0a6; font-size: 16px;">La sección de <strong>${tabName.toUpperCase()}</strong> en Chronioñ Search está en desarrollo.</p>
+                        <p style="color: #5f6368; font-size: 14px; margin-top: 8px;">Usa la pestaña <strong>Todo</strong> o <strong>Modo IA</strong>.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Motor JavaScript de Síntesis / Modo IA Nativo
+        function generateChronionAIOverview(queryText, data) {
+            let overviewText = "";
+            
+            if (data.AbstractText) {
+                overviewText = `<strong>Visión General de Chronioñ IA:</strong> ${data.AbstractText}`;
+            } else if (data.RelatedTopics && data.RelatedTopics.length > 0) {
+                const firstSnippets = data.RelatedTopics
+                    .filter(t => t.Text)
+                    .slice(0, 2)
+                    .map(t => t.Text)
+                    .join(" ");
+                
+                if (firstSnippets) {
+                    overviewText = `<strong>Resumen inteligente sobre "${queryText}":</strong> ${firstSnippets}`;
+                }
+            }
+
+            if (!overviewText) {
+                overviewText = `Chronioñ IA analizó la consulta para <strong>${queryText}</strong>. Puedes revisar los enlaces estructurados a continuación para obtener más información directa.`;
+            }
+
+            return `
+                <div class="ai-overview-card">
+                    <div class="ai-header">
+                        <span class="ai-sparkle">✨</span> Visión general creada por Chronioñ IA
+                    </div>
+                    <div class="ai-content">
+                        ${overviewText}
+                    </div>
+                    <div class="ai-sources">
+                        Generado dinámicamente con procesamiento en cliente JS.
+                    </div>
+                </div>
+            `;
+        }
+
+        function fetchSearch(searchQuery) {
             window.handleDDGResponse = function(data) {
                 let htmlContent = '';
                 let totalResults = 0;
 
-                // 1. Respuesta directa (Instant Answer) si existe
+                // Generar bloque IA si está en Modo IA o como tarjeta superior en 'Todo'
+                if (currentMode === 'modo-ia' || currentMode === 'todo') {
+                    htmlContent += generateChronionAIOverview(searchQuery, data);
+                }
+
+                // Si se seleccionó exclusivamente 'Modo IA', mostramos la tarjeta enfocada
+                if (currentMode === 'modo-ia') {
+                    statusEl.innerText = `Respuesta generada para "${searchQuery}"`;
+                    container.innerHTML = htmlContent;
+                    return;
+                }
+
+                // Renderizado estándar de enlaces
                 if (data.AbstractText && data.AbstractURL) {
                     totalResults++;
                     htmlContent += `
@@ -104,60 +189,40 @@
                     `;
                 }
 
-                // 2. Temas y resultados web variados
                 if (data.RelatedTopics && data.RelatedTopics.length > 0) {
                     data.RelatedTopics.forEach(topic => {
                         if (topic.FirstURL && topic.Text) {
                             totalResults++;
-                            const titleParts = topic.Text.split(' - ');
-                            const title = titleParts[0] || searchQuery;
-
                             htmlContent += `
                                 <div class="result-item">
                                     <div class="result-site">🌐 ${topic.FirstURL}</div>
-                                    <a href="${topic.FirstURL}" class="result-title" target="_blank">${title}</a>
+                                    <a href="${topic.FirstURL}" class="result-title" target="_blank">${topic.Text.split(' - ')[0]}</a>
                                     <div class="result-snippet">${topic.Text}</div>
                                 </div>
                             `;
-                        } else if (topic.Topics) {
-                            // Subtemas agrupados
-                            topic.Topics.forEach(subTopic => {
-                                if (subTopic.FirstURL && subTopic.Text) {
-                                    totalResults++;
-                                    htmlContent += `
-                                        <div class="result-item">
-                                            <div class="result-site">🌐 ${subTopic.FirstURL}</div>
-                                            <a href="${subTopic.FirstURL}" class="result-title" target="_blank">${subTopic.Text.split(' - ')[0]}</a>
-                                            <div class="result-snippet">${subTopic.Text}</div>
-                                        </div>
-                                    `;
-                                }
-                            });
                         }
                     });
                 }
 
-                // Si no hay resultados directos, ofrece redirección web abierta
-                if (totalResults === 0) {
-                    statusEl.innerText = `Mostrando acceso directo para "${searchQuery}"`;
+                if (totalResults === 0 && currentMode !== 'modo-ia') {
+                    statusEl.innerText = `Resultados directos para "${searchQuery}"`;
                     container.innerHTML = `
                         <div class="result-item">
                             <div class="result-site">🌐 https://duckduckgo.com/?q=${encodeURIComponent(searchQuery)}</div>
                             <a href="https://duckduckgo.com/?q=${encodeURIComponent(searchQuery)}" class="result-title" target="_blank">Buscar "${searchQuery}" en la Web Abierta</a>
-                            <div class="result-snippet">Haz clic para consultar todas las coincidencias globales en la red.</div>
+                            <div class="result-snippet">Consulta los enlaces directamente en la red global.</div>
                         </div>
                     `;
                 } else {
-                    statusEl.innerText = `Cerca de ${totalResults * 15} resultados para "${searchQuery}"`;
+                    statusEl.innerText = `Cerca de ${totalResults * 12} resultados para "${searchQuery}"`;
                     container.innerHTML = `<div class="status-text">${statusEl.innerText}</div>` + htmlContent;
                 }
             };
 
-            // Inyección de script dinámico para bypass de CORS vía JSONP
             const script = document.createElement('script');
             script.src = `https://api.duckduckgo.com/?q=${encodeURIComponent(searchQuery)}&format=json&pretty=1&callback=handleDDGResponse`;
             script.onerror = function() {
-                statusEl.innerText = 'Error al obtener respuesta del motor de búsqueda.';
+                statusEl.innerText = 'Error al procesar la búsqueda.';
             };
             document.body.appendChild(script);
         }
