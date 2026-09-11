@@ -3,23 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Resultados - Chronioñ</title>
+    <title>Búsqueda en Chronioñ</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: #0f172a; color: #f8fafc; padding: 20px; }
-        header { display: flex; align-items: center; gap: 20px; padding-bottom: 20px; border-bottom: 1px solid #334155; margin-bottom: 25px; }
-        .logo-link { display: flex; align-items: center; height: 35px; text-decoration: none; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        body { background-color: #202124; color: #bdc1c6; min-height: 100vh; display: flex; flex-direction: column; }
+        
+        /* Header Estilo Google */
+        header { display: flex; align-items: center; padding: 16px 24px; border-bottom: 1px solid #3c4043; gap: 24px; }
+        .logo-link { height: 30px; display: flex; align-items: center; text-decoration: none; }
         .logo-link img { height: 100%; width: auto; }
-        .search-box { display: flex; gap: 10px; width: 100%; max-width: 500px; }
-        input[type="text"] { flex: 1; padding: 10px 16px; font-size: 1rem; border-radius: 20px; border: 2px solid #334155; background-color: #1e293b; color: #fff; outline: none; }
-        button { padding: 10px 20px; border-radius: 20px; border: none; background-color: #38bdf8; color: #0f172a; font-weight: 600; cursor: pointer; }
-        .results-container { max-width: 700px; margin-left: 10px; }
-        .result-item { margin-bottom: 24px; }
-        .result-url { font-size: 0.85rem; color: #94a3b8; margin-bottom: 4px; }
-        .result-title { font-size: 1.2rem; color: #38bdf8; text-decoration: none; display: inline-block; margin-bottom: 6px; }
+        
+        .search-box { flex: 1; max-width: 690px; }
+        .search-box form { display: flex; }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px 18px;
+            font-size: 15px;
+            border-radius: 24px;
+            border: 1px solid #5f6368;
+            background-color: #303134;
+            color: #e8eaed;
+            outline: none;
+        }
+        input[type="text"]:focus { border-color: #8ab4f8; }
+
+        /* Navegación por pestañas */
+        .nav-tabs { display: flex; gap: 20px; padding: 12px 160px; border-bottom: 1px solid #3c4043; font-size: 14px; }
+        .tab { color: #9aa0a6; text-decoration: none; padding-bottom: 8px; border-bottom: 3px solid transparent; }
+        .tab.active { color: #8ab4f8; border-color: #8ab4f8; font-weight: 500; }
+
+        /* Contenedor de Resultados */
+        .results-container { max-width: 650px; margin-left: 160px; padding: 20px 0; flex: 1; }
+        .status-text { font-size: 14px; color: #9aa0a6; margin-bottom: 20px; }
+
+        .result-item { margin-bottom: 28px; }
+        .result-site { font-size: 12px; color: #bdc1c6; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+        .result-title { font-size: 20px; color: #8ab4f8; text-decoration: none; display: inline-block; margin-bottom: 6px; }
         .result-title:hover { text-decoration: underline; }
-        .result-snippet { font-size: 0.95rem; color: #cbd5e1; line-height: 1.4; }
+        .result-snippet { font-size: 14px; color: #bdc1c6; line-height: 1.5; }
+
+        @media (max-width: 768px) {
+            header { flex-direction: column; align-items: flex-start; }
+            .nav-tabs, .results-container { margin-left: 20px; padding-left: 0; }
+        }
     </style>
 </head>
 <body>
@@ -27,40 +54,76 @@
         <a href="index.html" class="logo-link">
             <img src="logo.svg" alt="Chronioñ Logo">
         </a>
-        <form class="search-box" action="search.html" method="GET">
-            <input type="text" id="searchInput" name="q" required>
-            <button type="submit">Buscar</button>
-        </form>
+        <div class="search-box">
+            <form action="search.html" method="GET">
+                <input type="text" id="searchInput" name="q" required autocomplete="off">
+            </form>
+        </div>
     </header>
 
+    <div class="nav-tabs">
+        <a href="#" class="tab active">Todo</a>
+        <a href="#" class="tab">Imágenes</a>
+        <a href="#" class="tab">Vídeos</a>
+        <a href="#" class="tab">Noticias</a>
+    </div>
+
     <main class="results-container" id="results">
-        <!-- Los resultados renderizados por JavaScript aparecerán aquí -->
+        <div class="status-text" id="status">Cargando resultados de la web...</div>
     </main>
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const query = urlParams.get('q');
-        
+        const container = document.getElementById('results');
+        const statusEl = document.getElementById('status');
+
         if (query) {
             document.getElementById('searchInput').value = query;
             document.title = `${query} - Búsqueda en Chronioñ`;
-            
-            const container = document.getElementById('results');
-            container.innerHTML = `
-                <p style="color: #64748b; margin-bottom: 20px;">Mostrando resultados para: <strong>${query}</strong></p>
-                
-                <div class="result-item">
-                    <div class="result-url">https://github.com/anyelo888ra-ux/chronion-browser</div>
-                    <a href="https://github.com/anyelo888ra-ux/chronion-browser" class="result-title">Chronioñ Browser para PC (Python)</a>
-                    <div class="result-snippet">Navegador web ultra ligero, minimalista y rápido desarrollado completamente en Python.</div>
-                </div>
+            fetchResults(query);
+        } else {
+            statusEl.innerText = 'Escribe algo en la barra para buscar.';
+        }
 
-                <div class="result-item">
-                    <div class="result-url">https://github.com/anyelo888ra-ux/chronion.apk-open-source</div>
-                    <a href="https://github.com/anyelo888ra-ux/chronion.apk-open-source" class="result-title">Chronioñ Browser para Android (Kotlin)</a>
-                    <div class="result-snippet">Navegador web nativo para Android creado con Jetpack Compose y Kotlin.</div>
-                </div>
-            `;
+        // Función para consultar resultados automáticamente
+        async function fetchResults(searchQuery) {
+            try {
+                // API pública de búsqueda en español
+                const response = await fetch(`https://es.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(searchQuery)}&format=json&origin=*`);
+                const data = await response.json();
+                
+                const searchResults = data.query.search;
+                
+                if (searchResults.length === 0) {
+                    statusEl.innerText = `No se encontraron resultados para "${searchQuery}".`;
+                    return;
+                }
+
+                statusEl.innerText = `Cerca de ${searchResults.length * 120} resultados encontrados para "${searchQuery}"`;
+
+                let htmlContent = `<div class="status-text">${statusEl.innerText}</div>`;
+
+                searchResults.forEach(item => {
+                    const title = item.title;
+                    const snippet = item.snippet.replace(/<span class="searchmatch">/g, '<b>').replace(/<\/span>/g, '</b>');
+                    const pageUrl = `https://es.wikipedia.org/wiki/${encodeURIComponent(title.replace(/ /g, '_'))}`;
+
+                    htmlContent += `
+                        <div class="result-item">
+                            <div class="result-site">🌐 ${pageUrl}</div>
+                            <a href="${pageUrl}" class="result-title" target="_blank">${title}</a>
+                            <div class="result-snippet">${snippet}...</div>
+                        </div>
+                    `;
+                });
+
+                container.innerHTML = htmlContent;
+
+            } catch (error) {
+                console.error("Error al obtener búsquedas:", error);
+                statusEl.innerText = 'Ocurrió un error al cargar los resultados de la red.';
+            }
         }
     </script>
 </body>
