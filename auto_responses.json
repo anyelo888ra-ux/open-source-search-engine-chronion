@@ -1,0 +1,24 @@
+{
+  "responses": [
+    {
+      "id": "greeting",
+      "triggers": ["hola", "buenas", "buenas tardes", "buen dia", "hello", "hi"],
+      "response": "¡Hola! Soy Chronioñ — ¿en qué te puedo ayudar hoy?"
+    },
+    {
+      "id": "search_tip",
+      "triggers": ["cómo busco", "search tips", "filtrar", "filtro"],
+      "response": "Prueba comillas para búsquedas exactas, usa + para incluir términos y - para excluir. Ej: \"linux tutorial\" +terminal -windows"
+    },
+    {
+      "id": "about_chronion",
+      "triggers": ["qué es chronioñ", "qué es chronion", "chronion", "navegador"],
+      "response": "Chronioñ es un motor de búsqueda y navegador experimental, open-source y hecho para escritorio. Más info en el repo."
+    },
+    {
+      "id": "default",
+      "triggers": [],
+      "response": "No estoy seguro — ¿puedes reformular? Puedo buscar resultados relacionados o darte sugerencias."
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Chronioñ — Asistente</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #0f1720; color: #e6eef8; }
+    #chat { width: 420px; border: 1px solid #2b3948; padding: 12px; margin: 20px; background: #0b1220; border-radius: 8px }
+    #messages { height: 260px; overflow:auto; border:1px solid #111827; padding:8px; background:#071018 }
+    .msg { margin:6px 0; }
+    .user { color: #7dd3fc; }
+    .bot { color: #cbd5e1; }
+    #input { width: calc(100% - 88px); padding:8px; border-radius:4px; border:1px solid #1f2937; background:#0b1220; color:#e6eef8 }
+    #send { padding:8px 12px; margin-left:6px; border-radius:4px; background:#0ea5a9; color:#042027; border:none }
+  </style>
+</head>
+<body>
+  <div id="chat">
+    <h3>Chronioñ — Asistente</h3>
+    <div id="messages"></div>
+    <div style="display:flex; margin-top:8px">
+      <input id="input" placeholder="Escribe aquí..." />
+      <button id="send">Enviar</button>
+    </div>
+  </div>
+
+  <script src="chatbot.js"></script>
+  <script>
+    const messagesEl = document.getElementById('messages');
+    const input = document.getElementById('input');
+    const send = document.getElementById('send');
+
+    function append(role, text) {
+      const d = document.createElement('div');
+      d.className = 'msg ' + (role === 'user' ? 'user' : 'bot');
+      d.textContent = (role === 'user' ? 'Tú: ' : 'Bot: ') + text;
+      messagesEl.appendChild(d);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    send.addEventListener('click', async () => {
+      const q = input.value.trim();
+      if(!q) return;
+      append('user', q);
+      input.value = '';
+      append('bot', 'Pensando...');
+      const res = await window.chatbot.handle(q);
+      // replace last bot "Pensando..." with real response:
+      messagesEl.lastChild.textContent = 'Bot: ' + res;
+    });
+
+    input.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter') send.click();
+    });
+  </script>
+</body>
+</html>
