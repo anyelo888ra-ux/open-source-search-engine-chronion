@@ -7,68 +7,96 @@
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
-        body { background-color: #202124; color: #bdc1c6; min-height: 100vh; display: flex; flex-direction: column; }
+        body { background-color: #202124; color: #bdc1c6; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
         
-        /* Header Estilo Google Dark */
+        /* Header */
         header { display: flex; align-items: center; padding: 16px 24px; border-bottom: 1px solid #3c4043; gap: 24px; }
         .logo-link { height: 30px; display: flex; align-items: center; text-decoration: none; }
         .logo-link img { height: 100%; width: auto; }
-        
         .search-box { flex: 1; max-width: 690px; }
         .search-box form { display: flex; }
         input[type="text"] {
-            width: 100%;
-            padding: 10px 18px;
-            font-size: 15px;
-            border-radius: 24px;
-            border: 1px solid #5f6368;
-            background-color: #303134;
-            color: #e8eaed;
-            outline: none;
+            width: 100%; padding: 10px 18px; font-size: 15px; border-radius: 24px;
+            border: 1px solid #5f6368; background-color: #303134; color: #e8eaed; outline: none;
         }
         input[type="text"]:focus { border-color: #8ab4f8; }
 
-        /* Navegación por pestañas */
+        /* Tabs */
         .nav-tabs { display: flex; gap: 20px; padding: 12px 160px; border-bottom: 1px solid #3c4043; font-size: 14px; }
         .tab { color: #9aa0a6; text-decoration: none; padding-bottom: 8px; border-bottom: 3px solid transparent; cursor: pointer; }
         .tab.active { color: #8ab4f8; border-color: #8ab4f8; font-weight: 500; }
         .tab.ai-tab { color: #c2e7ff; background: linear-gradient(90deg, #a8c7fa, #d3e3fd); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: bold; }
 
-        /* Contenedor de Resultados */
-        .results-container { max-width: 680px; margin-left: 160px; padding: 20px 0; flex: 1; }
+        /* Layout */
+        .main-layout { display: flex; max-width: 1100px; margin-left: 160px; padding: 20px 0; flex: 1; gap: 40px; }
+        .results-column { flex: 1; max-width: 680px; }
+        .knowledge-column { width: 350px; display: none; }
+        
         .status-text { font-size: 14px; color: #9aa0a6; margin-bottom: 20px; }
 
-        /* Estilos del Bloque Modo IA (AI Overview) */
+        /* Tarjeta Modo IA */
         .ai-overview-card {
-            background: #1e1f20;
-            border: 1px solid #3c4043;
-            border-radius: 12px;
-            padding: 16px 20px;
-            margin-bottom: 24px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            background: #1e1f20; border: 1px solid #3c4043; border-radius: 12px; padding: 16px 20px;
+            margin-bottom: 24px; border-left: 4px solid #8ab4f8;
         }
         .ai-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-weight: 600; color: #8ab4f8; font-size: 15px; }
-        .ai-sparkle { font-size: 16px; }
         .ai-content { font-size: 15px; color: #e8eaed; line-height: 1.6; }
-        .ai-sources { margin-top: 12px; padding-top: 10px; border-top: 1px solid #2e3134; font-size: 12px; color: #9aa0a6; }
 
+        /* Resultados */
         .result-item { margin-bottom: 28px; }
         .result-site { font-size: 12px; color: #bdc1c6; margin-bottom: 4px; word-break: break-all; }
         .result-title { font-size: 20px; color: #8ab4f8; text-decoration: none; display: inline-block; margin-bottom: 6px; }
         .result-title:hover { text-decoration: underline; }
         .result-snippet { font-size: 14px; color: #bdc1c6; line-height: 1.5; }
+        .result-img { max-width: 100px; border-radius: 8px; float: left; margin-right: 15px; margin-bottom: 5px; }
 
-        @media (max-width: 768px) {
-            header { flex-direction: column; align-items: flex-start; }
-            .nav-tabs, .results-container { margin-left: 20px; padding-left: 0; }
+        /* PANEL DE CONOCIMIENTO */
+        .knowledge-panel { background: #1e1f20; border: 1px solid #3c4043; border-radius: 12px; overflow: hidden; }
+        .kg-header { padding: 20px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid #3c4043; }
+        .kg-title { font-size: 24px; font-weight: 500; color: #fff; }
+        .kg-desc { font-size: 14px; line-height: 1.5; color: #e8eaed; }
+        .kg-details { padding: 15px 20px; }
+        .kg-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #303134; font-size: 14px; }
+        .kg-related { padding: 20px; border-top: 1px solid #3c4043; }
+        .kg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .kg-card { background: #303134; border-radius: 8px; padding: 10px; text-align: center; text-decoration: none; color: #e8eaed; }
+        .kg-card img { width: 60px; height: 60px; border-radius: 8px; object-fit: contain; margin-bottom: 8px; }
+
+        /* AMONG US EASTER EGG */
+        .amogus-card {
+            background: linear-gradient(135deg, #C51111, #7A0000);
+            border: 2px solid #FF0000;
+            border-radius: 12px; padding: 30px; text-align: center; color: white;
+            box-shadow: 0 0 30px rgba(255,0,0,0.4); margin-bottom: 20px;
+        }
+        .amogus-title { font-size: 32px; font-weight: 900; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
+        .amogus-btn {
+            background: #FF0000; color: white; border: 2px solid white; padding: 12px 24px;
+            font-size: 18px; font-weight: bold; border-radius: 30px; cursor: pointer;
+            margin-top: 20px; transition: 0.2s; box-shadow: 0 4px 0 #500000;
+        }
+        .amogus-btn:hover { background: #FF3333; transform: translateY(-2px); box-shadow: 0 6px 0 #500000; }
+        .amogus-btn:active { transform: translateY(2px); box-shadow: 0 0 0 #500000; }
+
+        /* GAME OVERLAY */
+        #amogus-game-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.95); z-index: 9999; display: none; flex-direction: column;
+            justify-content: center; align-items: center;
+        }
+        #amogus-canvas { background: #111; border: 2px solid #FF0000; border-radius: 12px; }
+        .game-header { color: #FF0000; font-size: 24px; font-weight: bold; margin-bottom: 15px; font-family: monospace; }
+        .game-btn { margin-top: 15px; background: #FF0000; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+
+        @media (max-width: 900px) {
+            .main-layout { flex-direction: column; margin-left: 20px; }
+            .nav-tabs { padding: 12px 20px; }
         }
     </style>
 </head>
 <body>
     <header>
-        <a href="index.html" class="logo-link">
-            <img src="logo.svg" alt="Chronioñ Logo">
-        </a>
+        <a href="index.html" class="logo-link"><img src="logo.svg" alt="Chronioñ Logo"></a>
         <div class="search-box">
             <form action="search.html" method="GET">
                 <input type="text" id="searchInput" name="q" required autocomplete="off">
@@ -77,154 +105,300 @@
     </header>
 
     <div class="nav-tabs">
-        <a class="tab active" onclick="switchTab(event, 'todo')">Todo</a>
-        <a class="tab ai-tab" onclick="switchTab(event, 'modo-ia')">✨ Modo IA</a>
-        <a class="tab" onclick="switchTab(event, 'imagenes')">Imágenes</a>
-        <a class="tab" onclick="switchTab(event, 'videos')">Vídeos</a>
-        <a class="tab" onclick="switchTab(event, 'noticias')">Noticias</a>
+        <a class="tab active" id="tab-todo" onclick="switchTab('todo')">Todo</a>
+        <a class="tab ai-tab" id="tab-ia" onclick="switchTab('ia')">✨ Modo IA</a>
+        <a class="tab" id="tab-img" onclick="switchTab('img')">Imágenes</a>
+        <a class="tab" id="tab-videos" onclick="switchTab('videos')">Vídeos</a>
+        <a class="tab" id="tab-noticias" onclick="switchTab('noticias')">Noticias</a>
     </div>
 
-    <main class="results-container" id="results">
-        <div class="status-text" id="status">Cargando respuesta en vivo...</div>
-    </main>
+    <div class="main-layout">
+        <main class="results-column" id="results">
+            <div class="status-text" id="status">Cargando...</div>
+        </main>
+        <aside class="knowledge-column" id="knowledge-panel"></aside>
+    </div>
+
+    <!-- GAME OVERLAY -->
+    <div id="amogus-game-overlay">
+        <div class="game-header" id="game-title">¡ERES EL IMPOSTOR!</div>
+        <canvas id="amogus-canvas" width="600" height="400"></canvas>
+        <button class="game-btn" onclick="closeGame()">Salir del juego</button>
+    </div>
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const query = urlParams.get('q');
         const container = document.getElementById('results');
         const statusEl = document.getElementById('status');
+        const kgPanel = document.getElementById('knowledge-panel');
         let currentMode = 'todo';
+
+        // Lista negra de memes / Easter Eggs
+        const memeTriggers = ['amogus', 'sus', 'impostor', 'among us', 'amongus', 'red', 'vent'];
 
         if (query) {
             document.getElementById('searchInput').value = query;
             document.title = `${query} - Búsqueda en Chronioñ`;
-            fetchSearch(query);
+            executeSearch(query);
         } else {
             statusEl.innerText = 'Escribe algo en la barra para buscar.';
         }
 
-        function switchTab(event, tabName) {
-            event.preventDefault();
+        function switchTab(mode) {
+            currentMode = mode;
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            event.target.classList.add('active');
-            currentMode = tabName;
+            document.getElementById(`tab-${mode}`).classList.add('active');
+            if (query) executeSearch(query);
+        }
 
-            if (tabName === 'todo' || tabName === 'modo-ia') {
-                if (query) fetchSearch(query);
-            } else {
-                statusEl.innerText = '';
-                container.innerHTML = `
-                    <div style="text-align: center; padding: 50px 20px;">
-                        <h2 style="color: #8ab4f8; font-size: 24px; margin-bottom: 10px;">🚧 Próximamente</h2>
-                        <p style="color: #9aa0a6; font-size: 16px;">La sección de <strong>${tabName.toUpperCase()}</strong> en Chronioñ Search está en desarrollo.</p>
-                        <p style="color: #5f6368; font-size: 14px; margin-top: 8px;">Usa la pestaña <strong>Todo</strong> o <strong>Modo IA</strong>.</p>
-                    </div>
-                `;
+        async function executeSearch(q) {
+            const lowerQ = q.toLowerCase();
+            container.innerHTML = `<div class="status-text">Buscando "${q}" en la red Chronioñ...</div>`;
+            kgPanel.style.display = 'none';
+
+            // --- EASTER EGG DE AMONG US ---
+            if (memeTriggers.some(trigger => lowerQ.includes(trigger))) {
+                renderAmogusEasterEgg(q);
+                return;
+            }
+
+            // --- VIDEOS Y NOTICIAS ---
+            if (currentMode === 'videos') {
+                container.innerHTML = `<div class="status-text">Resultados de video para "${q}"</div>
+                    <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(q)}" target="_blank" class="result-item" style="display:block; text-decoration:none;">
+                        <div class="result-site">🌐 youtube.com</div>
+                        <div class="result-title">▶️ Ver videos de "${q}" en YouTube</div>
+                    </a>`;
+                return;
+            }
+            if (currentMode === 'noticias') {
+                container.innerHTML = `<div class="status-text">Últimas noticias sobre "${q}"</div>
+                    <a href="https://news.google.com/search?q=${encodeURIComponent(q)}" target="_blank" class="result-item" style="display:block; text-decoration:none;">
+                        <div class="result-site">🌐 news.google.com</div>
+                        <div class="result-title">📰 Leer noticias de "${q}" en Google News</div>
+                    </a>`;
+                return;
+            }
+
+            // --- BÚSQUEDA EN WIKIPEDIA ---
+            try {
+                const wikiUrl = `https://es.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(q)}&gsrlimit=10&prop=extracts|pageimages&exintro&explaintext&pithumbsize=200&format=json&origin=*`;
+                const response = await fetch(wikiUrl);
+                const data = await response.json();
+
+                if (!data.query || !data.query.pages) {
+                    showNoResults(q);
+                    return;
+                }
+
+                const pages = Object.values(data.query.pages);
+
+                // --- MODO IMÁGENES ---
+                if (currentMode === 'img') {
+                    let imgHtml = `<div class="status-text">Imágenes encontradas para "${q}"</div><div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:10px;">`;
+                    let hasImages = false;
+                    pages.forEach(p => {
+                        if (p.thumbnail && p.thumbnail.source) {
+                            hasImages = true;
+                            imgHtml += `<a href="${p.thumbnail.source}" target="_blank" style="background:#303134; padding:5px; border-radius:8px; text-align:center; text-decoration:none; color:#fff;">
+                                <img src="${p.thumbnail.source}" style="width:100%; height:120px; object-fit:cover; border-radius:4px;">
+                                <p style="font-size:12px; margin-top:5px;">${p.title}</p>
+                            </a>`;
+                        }
+                    });
+                    imgHtml += `</div>`;
+                    if (!hasImages) imgHtml = `<div class="status-text">No se encontraron imágenes para "${q}".</div>`;
+                    container.innerHTML = imgHtml;
+                    return;
+                }
+
+                // --- MODO IA ---
+                if (currentMode === 'ia') {
+                    const mainArticle = pages[0];
+                    const aiSummary = mainArticle.extract || "No hay un resumen disponible para este término.";
+                    container.innerHTML = `
+                        <div class="ai-overview-card">
+                            <div class="ai-header"><span>✨</span> Visión general de Chronioñ IA</div>
+                            <div class="ai-content"><strong>${mainArticle.title}:</strong> ${aiSummary}</div>
+                        </div>
+                    `;
+                    statusEl.innerText = `Resultados de IA para "${q}"`;
+                    return;
+                }
+
+                // --- MODO TODO ---
+                let html = `<div class="status-text">Aproximadamente ${pages.length * 10} resultados para "${q}"</div>`;
+                
+                if (pages[0].extract) {
+                    const shortExtract = pages[0].extract.substring(0, 200) + "...";
+                    html += `<div class="ai-overview-card"><div class="ai-header"><span>✨</span> Resumen rápido de Chronioñ</div><div class="ai-content">${shortExtract}</div></div>`;
+                }
+
+                pages.forEach(p => {
+                    const imgHtml = p.thumbnail ? `<img src="${p.thumbnail.source}" class="result-img">` : '';
+                    const extract = p.extract ? (p.extract.length > 200 ? p.extract.substring(0, 200) + "..." : p.extract) : "Sin descripción disponible.";
+                    html += `
+                        <div class="result-item">
+                            <div class="result-site" style="clear:both;">🌐 es.wikipedia.org/wiki/${encodeURIComponent(p.title)}</div>
+                            <a href="https://es.wikipedia.org/wiki/${encodeURIComponent(p.title)}" class="result-title" target="_blank">${p.title}</a>
+                            <div class="result-snippet">${imgHtml}${extract}</div>
+                        </div>
+                    `;
+                });
+
+                container.innerHTML = html;
+
+                if (pages[0].thumbnail) {
+                    generateKnowledgeGraph(pages[0]);
+                }
+
+            } catch (error) {
+                statusEl.innerText = "Error de conexión con el motor.";
+                container.innerHTML = `<div class="status-text">No se pudo conectar con Chronioñ Engine.</div>`;
             }
         }
 
-        // Motor JavaScript de Síntesis / Modo IA Nativo
-        function generateChronionAIOverview(queryText, data) {
-            let overviewText = "";
+        // --- FUNCIONES DEL EASTER EGG ---
+        function renderAmogusEasterEgg(q) {
+            statusEl.innerText = `Resultado altamente sospechoso para "${q}"`;
+            kgPanel.style.display = 'none';
             
-            if (data.AbstractText) {
-                overviewText = `<strong>Visión General de Chronioñ IA:</strong> ${data.AbstractText}`;
-            } else if (data.RelatedTopics && data.RelatedTopics.length > 0) {
-                const firstSnippets = data.RelatedTopics
-                    .filter(t => t.Text)
-                    .slice(0, 2)
-                    .map(t => t.Text)
-                    .join(" ");
-                
-                if (firstSnippets) {
-                    overviewText = `<strong>Resumen inteligente sobre "${queryText}":</strong> ${firstSnippets}`;
+            container.innerHTML = `
+                <div class="amogus-card">
+                    <div class="amogus-title">¡AMOGUS DETECTADO!</div>
+                    <p style="font-size: 18px;">Parece que has buscado algo muy <strong>sus</strong>.</p>
+                    <p style="font-size: 14px; margin-top: 10px; color: #ffcccc;">La IA de Chronioñ ha detectado actividad de impostores.</p>
+                    <button class="amogus-btn" onclick="startAmogusGame()">🚀 Lanzar Nave (Jugar)</button>
+                </div>
+            `;
+        }
+
+        function startAmogusGame() {
+            document.getElementById('amogus-game-overlay').style.display = 'flex';
+            initAmogusGame();
+        }
+
+        function closeGame() {
+            document.getElementById('amogus-game-overlay').style.display = 'none';
+            if (gameLoop) cancelAnimationFrame(gameLoop);
+        }
+
+        // --- MINIJUEGO AMOGUS (Space Shooter Simple) ---
+        let canvas, ctx, gameLoop;
+        let player, bullets, enemies, score, gameOver;
+
+        function initAmogusGame() {
+            canvas = document.getElementById('amogus-canvas');
+            ctx = canvas.getContext('2d');
+            player = { x: 300, y: 350, w: 30, h: 40, speed: 5 };
+            bullets = [];
+            enemies = [];
+            score = 0;
+            gameOver = false;
+            document.getElementById('game-title').innerText = "¡ERES EL IMPOSTOR! Dispara a los tripulantes 🚀";
+            
+            // Controles
+            document.onkeydown = (e) => {
+                if (e.key === 'ArrowLeft' && player.x > 0) player.x -= player.speed * 2;
+                if (e.key === 'ArrowRight' && player.x < canvas.width - player.w) player.x += player.speed * 2;
+                if (e.key === ' ' && !gameOver) {
+                    bullets.push({ x: player.x + player.w/2, y: player.y, speed: 7 });
                 }
-            }
+            };
 
-            if (!overviewText) {
-                overviewText = `Chronioñ IA analizó la consulta para <strong>${queryText}</strong>. Puedes revisar los enlaces estructurados a continuación para obtener más información directa.`;
-            }
+            // Spawner de enemigos
+            setInterval(() => {
+                if (!gameOver) {
+                    enemies.push({ x: Math.random() * (canvas.width - 30), y: -30, w: 25, h: 25, speed: 2 + Math.random() * 2 });
+                }
+            }, 800);
 
-            return `
-                <div class="ai-overview-card">
-                    <div class="ai-header">
-                        <span class="ai-sparkle">✨</span> Visión general creada por Chronioñ IA
+            if (gameLoop) cancelAnimationFrame(gameLoop);
+            gameLoop = requestAnimationFrame(updateGame);
+        }
+
+        function updateGame() {
+            if (gameOver) return;
+            ctx.fillStyle = '#111';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Dibujar jugador (Rojo)
+            ctx.fillStyle = '#FF0000';
+            ctx.fillRect(player.x, player.y, player.w, player.h);
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(player.x + 5, player.y + 10, 5, 10); // Visor
+
+            // Balas
+            ctx.fillStyle = '#00FF00';
+            bullets.forEach((b, i) => {
+                b.y -= b.speed;
+                ctx.fillRect(b.x, b.y, 4, 10);
+                if (b.y < 0) bullets.splice(i, 1);
+            });
+
+            // Enemigos
+            ctx.fillStyle = '#00FFFF';
+            enemies.forEach((e, i) => {
+                e.y += e.speed;
+                ctx.fillRect(e.x, e.y, e.w, e.h);
+
+                // Colisión jugador
+                if (e.y + e.h > player.y && e.x < player.x + player.w && e.x + e.w > player.x) {
+                    gameOver = true;
+                    document.getElementById('game-title').innerText = "¡FUISTE EXPULSADO! (Game Over)";
+                }
+
+                // Colisión bala
+                bullets.forEach((b, bi) => {
+                    if (b.y < e.y + e.h && b.y > e.y && b.x > e.x && b.x < e.x + e.w) {
+                        enemies.splice(i, 1);
+                        bullets.splice(bi, 1);
+                        score++;
+                        if (score >= 15) {
+                            gameOver = true;
+                            document.getElementById('game-title').innerText = "¡VICTORIA! Los tripulantes fueron eliminados.";
+                        }
+                    }
+                });
+            });
+
+            if (!gameOver) gameLoop = requestAnimationFrame(updateGame);
+        }
+
+        function generateKnowledgeGraph(page) {
+            kgPanel.style.display = 'block';
+            kgPanel.innerHTML = `
+                <div class="knowledge-panel">
+                    <div class="kg-header">
+                        <div style="display:flex; align-items:center; gap:15px;">
+                            <img src="${page.thumbnail.source}" style="width:60px; height:60px; border-radius:8px; object-fit:cover;">
+                            <div><div class="kg-title">${page.title}</div><div style="font-size:13px; color:#bdc1c6;">Entidad / Artículo</div></div>
+                        </div>
+                        <div class="kg-desc">${page.extract ? page.extract.substring(0, 150) + '...' : ''}</div>
                     </div>
-                    <div class="ai-content">
-                        ${overviewText}
-                    </div>
-                    <div class="ai-sources">
-                        Generado dinámicamente con procesamiento en cliente JS.
+                    <div class="kg-related">
+                        <div style="font-size: 16px; color: #fff; margin-bottom: 15px;">También se buscó</div>
+                        <div class="kg-grid">
+                            <a href="search.html?q=ChatGPT" class="kg-card"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/ChatGPT_logo.svg/120px-ChatGPT_logo.svg.png"><span>ChatGPT</span></a>
+                            <a href="search.html?q=Gemini" class="kg-card"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Google_Gemini_logo.svg/120px-Google_Gemini_logo.svg.png"><span>Gemini</span></a>
+                            <a href="search.html?q=DeepSeek" class="kg-card"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/DeepSeek_logo.svg/120px-DeepSeek_logo.svg.png"><span>DeepSeek</span></a>
+                            <a href="search.html?q=Copilot" class="kg-card"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Microsoft_Copilot_Icon.svg/120px-Microsoft_Copilot_Icon.svg.png"><span>Copilot</span></a>
+                        </div>
                     </div>
                 </div>
             `;
         }
 
-        function fetchSearch(searchQuery) {
-            window.handleDDGResponse = function(data) {
-                let htmlContent = '';
-                let totalResults = 0;
-
-                // Generar bloque IA si está en Modo IA o como tarjeta superior en 'Todo'
-                if (currentMode === 'modo-ia' || currentMode === 'todo') {
-                    htmlContent += generateChronionAIOverview(searchQuery, data);
-                }
-
-                // Si se seleccionó exclusivamente 'Modo IA', mostramos la tarjeta enfocada
-                if (currentMode === 'modo-ia') {
-                    statusEl.innerText = `Respuesta generada para "${searchQuery}"`;
-                    container.innerHTML = htmlContent;
-                    return;
-                }
-
-                // Renderizado estándar de enlaces
-                if (data.AbstractText && data.AbstractURL) {
-                    totalResults++;
-                    htmlContent += `
-                        <div class="result-item" style="border-left: 3px solid #8ab4f8; padding-left: 12px;">
-                            <div class="result-site">🌐 ${data.AbstractURL}</div>
-                            <a href="${data.AbstractURL}" class="result-title" target="_blank">${data.Heading}</a>
-                            <div class="result-snippet">${data.AbstractText}</div>
-                        </div>
-                    `;
-                }
-
-                if (data.RelatedTopics && data.RelatedTopics.length > 0) {
-                    data.RelatedTopics.forEach(topic => {
-                        if (topic.FirstURL && topic.Text) {
-                            totalResults++;
-                            htmlContent += `
-                                <div class="result-item">
-                                    <div class="result-site">🌐 ${topic.FirstURL}</div>
-                                    <a href="${topic.FirstURL}" class="result-title" target="_blank">${topic.Text.split(' - ')[0]}</a>
-                                    <div class="result-snippet">${topic.Text}</div>
-                                </div>
-                            `;
-                        }
-                    });
-                }
-
-                if (totalResults === 0 && currentMode !== 'modo-ia') {
-                    statusEl.innerText = `Resultados directos para "${searchQuery}"`;
-                    container.innerHTML = `
-                        <div class="result-item">
-                            <div class="result-site">🌐 https://duckduckgo.com/?q=${encodeURIComponent(searchQuery)}</div>
-                            <a href="https://duckduckgo.com/?q=${encodeURIComponent(searchQuery)}" class="result-title" target="_blank">Buscar "${searchQuery}" en la Web Abierta</a>
-                            <div class="result-snippet">Consulta los enlaces directamente en la red global.</div>
-                        </div>
-                    `;
-                } else {
-                    statusEl.innerText = `Cerca de ${totalResults * 12} resultados para "${searchQuery}"`;
-                    container.innerHTML = `<div class="status-text">${statusEl.innerText}</div>` + htmlContent;
-                }
-            };
-
-            const script = document.createElement('script');
-            script.src = `https://api.duckduckgo.com/?q=${encodeURIComponent(searchQuery)}&format=json&pretty=1&callback=handleDDGResponse`;
-            script.onerror = function() {
-                statusEl.innerText = 'Error al procesar la búsqueda.';
-            };
-            document.body.appendChild(script);
+        function showNoResults(q) {
+            statusEl.innerText = `Resultados directos para "${q}"`;
+            container.innerHTML = `
+                <div class="result-item">
+                    <div class="result-site">🌐 duckduckgo.com</div>
+                    <a href="https://duckduckgo.com/?q=${encodeURIComponent(q)}" class="result-title" target="_blank">Buscar "${q}" en la Web Abierta (DuckDuckGo)</a>
+                    <div class="result-snippet">Chronioñ no tiene índices propios para esto. Te redirigimos a la web global.</div>
+                </div>
+            `;
         }
     </script>
 </body>
