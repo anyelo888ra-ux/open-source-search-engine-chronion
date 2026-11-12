@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chronioñ - Modo IA Incógnito</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        body { background-color: #0d0e10; color: #e3e3e3; height: 100vh; display: flex; overflow: hidden; }
+        
+        /* Sidebar */
+        .sidebar { width: 260px; background-color: #141517; height: 100%; display: flex; flex-direction: column; padding: 15px; border-right: 1px solid #2a2b2f; transition: transform 0.3s; }
+        .incognito-badge { background: rgba(234, 67, 53, 0.1); border: 1px solid #ea4335; color: #ea4335; padding: 10px; border-radius: 8px; font-size: 12px; text-align: center; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: bold; }
+        
+        .new-chat-btn { background: #ea4335; border: none; color: white; font-size: 14px; display: flex; align-items: center; gap: 10px; padding: 10px; cursor: pointer; border-radius: 8px; transition: background 0.2s; margin-bottom: 20px; font-weight: bold; width: 100%; text-align: center; justify-content: center;}
+        .new-chat-btn:hover { background: #f28b82; }
+        
+        .sidebar-info { font-size: 12px; color: #9aa0a6; line-height: 1.5; margin-top: 10px; }
+
+        /* Main Chat Area */
+        .main-content { flex: 1; display: flex; flex-direction: column; position: relative; }
+        .top-bar { padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #2a2b2f; }
+        .logo-container { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+        .logo-svg { width: 30px; height: 30px; }
+        
+        .chat-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; align-items: center; scroll-behavior: smooth; }
+        .chat-inner { width: 100%; max-width: 800px; display: flex; flex-direction: column; gap: 24px; margin-top: 20px; }
+        
+        .message { display: flex; gap: 15px; line-height: 1.6; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .message.user { justify-content: flex-end; }
+        .message.user .bubble { background: #2a2b2f; padding: 12px 18px; border-radius: 18px; max-width: 80%; color: #e3e3e3; }
+        
+        .message.ai { justify-content: flex-start; }
+        .message.ai .avatar { width: 32px; height: 32px; border-radius: 50%; background: #1e1f20; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 18px;}
+        .message.ai .bubble { padding: 5px 0; max-width: 85%; color: #e3e3e3; font-size: 15px;}
+
+        /* Welcome Screen */
+        .welcome-screen { text-align: center; margin-top: 20vh; display: flex; flex-direction: column; align-items: center; width: 100%; }
+        .welcome-screen h1 { font-size: 32px; font-weight: 500; margin-bottom: 10px; color: #ea4335; }
+        .welcome-screen p { color: #9aa0a6; font-size: 14px; }
+        
+        /* Input Area */
+        .input-area { width: 100%; max-width: 800px; padding: 20px; margin: 0 auto; }
+        .input-box { background: #1e1f20; border-radius: 24px; padding: 8px 10px 8px 20px; display: flex; align-items: center; border: 1px solid #3c4043; transition: border 0.2s; }
+        .input-box:focus-within { border-color: #ea4335; }
+        .input-box input { flex: 1; background: transparent; border: none; color: #e3e3e3; font-size: 16px; outline: none; padding: 10px 0; }
+        .send-btn { background: #ea4335; color: #131314; border: none; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: bold; font-size: 20px; transition: 0.2s; }
+        .send-btn:hover { background: #f28b82; }
+        .send-btn:disabled { background: #3c4043; color: #9aa0a6; cursor: not-allowed; }
+
+        /* Typing */
+        .typing-indicator { display: flex; gap: 4px; align-items: center; height: 20px; }
+        .typing-indicator span { width: 6px; height: 6px; background-color: #ea4335; border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both; }
+        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .welcome-screen h1 { font-size: 24px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar Incógnito -->
+    <aside class="sidebar">
+        <div class="incognito-badge">
+            <span>🕵️‍♂️</span> Modo Incógnito
+        </div>
+        <button class="new-chat-btn" onclick="window.location.reload()">
+            🗑️ Borrar Chat Actual
+        </button>
+        <p class="sidebar-info">
+            Este chat no se guarda en tu dispositivo. Al cerrar la pestaña, todo se borrará.
+        </p>
+    </aside>
+
+    <!-- Main Chat -->
+    <main class="main-content">
+        <div class="top-bar">
+            <div class="logo-container" onclick="window.location.href='incognito.html'">
+                <!-- SVG Oficial de Chronioñ (Rojo para incógnito) -->
+                <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#ea4335;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#f28b82;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <circle cx="50" cy="50" r="40" stroke="url(#grad1)" stroke-width="8" fill="none" />
+                    <circle cx="50" cy="50" r="15" fill="url(#grad1)" />
+                    <path d="M 50 10 L 50 30 M 50 70 L 50 90 M 10 50 L 30 50 M 70 50 L 90 50" stroke="url(#grad1)" stroke-width="6" stroke-linecap="round"/>
+                </svg>
+                <span style="color: #ea4335; font-weight: bold; font-size: 20px;">Chronioñ</span>
+            </div>
+        </div>
+        
+        <div class="chat-container" id="chat-container">
+            <div class="welcome-screen" id="welcome-screen">
+                <h1>Modo Incógnito Activado</h1>
+                <p>Nada de lo que digas aquí se guardará en tu dispositivo.</p>
+            </div>
+        </div>
+
+        <div class="input-area">
+            <div class="input-box">
+                <input type="text" id="chat-input" placeholder="Pregunta algo de forma anónima..." autocomplete="off">
+                <button class="send-btn" id="send-btn" onclick="sendMessage()">↑</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // ==========================================
+        // LÓGICA DE CHAT INCÓGNITO (SIN LOCALSTORAGE)
+        // ==========================================
+        
+        let messages = []; // Solo en memoria, se borra al recargar
+
+        document.getElementById('chat-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !document.getElementById('send-btn').disabled) sendMessage();
+        });
+
+        async function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const sendBtn = document.getElementById('send-btn');
+            const text = input.value.trim();
+            if (!text) return;
+
+            input.value = '';
+            sendBtn.disabled = true;
+            
+            // Si es el primer mensaje, quitar la pantalla de bienvenida
+            const container = document.getElementById('chat-container');
+            if (!document.getElementById('chat-inner')) {
+                container.innerHTML = `<div class="chat-inner" id="chat-inner"></div>`;
+            }
+
+            appendMessageToUI('user', text);
+            messages.push({ role: 'user', text: text });
+            scrollToBottom();
+
+            const loadingId = 'loading-' + Date.now();
+            document.getElementById('chat-inner').innerHTML += `
+                <div class="message ai" id="${loadingId}">
+                    <div class="avatar">✨</div>
+                    <div class="bubble"><div class="typing-indicator"><span></span><span></span><span></span></div></div>
+                </div>
+            `;
+            scrollToBottom();
+
+            try {
+                const lowerText = text.toLowerCase();
+                let aiResponse = "";
+
+                // 1. Saludos
+                if (lowerText.match(/^(hola|qué tal|buenos días|buenas tardes|hey|quien eres|quién eres)/)) {
+                    aiResponse = "¡Hola! Soy Chronioñ IA en modo incógnito. Puedo buscar información o charlar, pero no guardaré nada de lo que digas. ¿Qué necesitas?";
+                } 
+                // 2. Búsqueda en Wikipedia
+                else {
+                    const wikiRes = await fetch(`https://es.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(text)}&gsrlimit=1&prop=extracts&exintro&explaintext&format=json&origin=*`);
+                    const data = await wikiRes.json();
+                    
+                    if (data.query && data.query.pages) {
+                        const page = Object.values(data.query.pages)[0];
+                        aiResponse = page.extract || "Parece que encontré el artículo, pero no puedo extraer su resumen.";
+                        if(aiResponse.length > 400) aiResponse = aiResponse.substring(0, 400) + "...";
+                    } else {
+                        aiResponse = "Parece que no hay una respuesta disponible para esta búsqueda. Prueba con otra pregunta más específica o diferente.";
+                    }
+                }
+
+                document.getElementById(loadingId).remove();
+
+                setTimeout(() => {
+                    appendMessageToUI('ai', aiResponse);
+                    messages.push({ role: 'ai', text: aiResponse });
+                    scrollToBottom();
+                    sendBtn.disabled = false;
+                    input.focus();
+                }, 600);
+
+            } catch (error) {
+                document.getElementById(loadingId).remove();
+                appendMessageToUI('ai', "Error de conexión. Intenta de nuevo.");
+                sendBtn.disabled = false;
+            }
+        }
+
+        function appendMessageToUI(role, text) {
+            const inner = document.getElementById('chat-inner');
+            if (!inner) return;
+            const formattedText = text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+            if (role === 'user') {
+                inner.innerHTML += `<div class="message user"><div class="bubble">${formattedText}</div></div>`;
+            } else {
+                inner.innerHTML += `
+                    <div class="message ai">
+                        <div class="avatar">✨</div>
+                        <div class="bubble">${formattedText}</div>
+                    </div>
+                `;
+            }
+        }
+
+        function scrollToBottom() {
+            const container = document.getElementById('chat-container');
+            container.scrollTop = container.scrollHeight;
+        }
+    </script>
+</body>
+</html>
