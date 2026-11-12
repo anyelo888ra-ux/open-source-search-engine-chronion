@@ -1,79 +1,97 @@
 const fs = require('fs');
 const path = require('path');
 
-// Archivo oficial donde se guardan TODAS las URLs aprobadas
 const DB_FILE = path.join(__dirname, 'urls-db.json');
+const REGISTER_DIR = path.join(__dirname, 'url-register');
 
-// Archivo que el usuario modificó en su PR (puede ser una carpeta o un archivo)
-const USER_FILE = path.join(__dirname, 'url-register', 'template.json');
-
-function procesarURL() {
+// Función para validar y procesar un archivo JSON
+function procesarArchivo(filePath) {
     try {
-        console.log("🤖 [Chronioñ Bot] Iniciando revisión de URL...");
-
-        // 1. Verificar si el usuario modificó el archivo
-        if (!fs.existsSync(USER_FILE)) {
-            console.log("⚠️ No se encontró el archivo template.json modificado.");
-            process.exit(0);
-        }
-
-        // 2. Leer el JSON del usuario
-        const rawData = fs.readFileSync(USER_FILE, 'utf8');
+        const rawData = fs.readFileSync(filePath, 'utf8');
         const userData = JSON.parse(rawData);
 
-        // 3. Validaciones básicas
+        // Validaciones
         if (!userData.url || !userData.title) {
-            console.error("❌ Error: Faltan campos obligatorios (url o title).");
-            process.exit(1); // Falla el Action
+            console.error(`❌ [${path.basename(filePath)}] Faltan campos obligatorios (url o title).`);
+            return false;
         }
 
         if (!userData.url.startsWith('http')) {
-            console.error("❌ Error: La URL debe empezar con http:// o https://");
-            process.exit(1);
+            console.error(`❌ [${path.basename(filePath)}] La URL debe empezar con http:// o https://`);
+            return false;
         }
 
-        // 4. Leer la base de datos actual (o crearla si no existe)
-        let db = [];
-        if (fs.existsSync(DB_FILE)) {
-            db = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
-        }
-
-        // 5. Comprobar si la URL ya está registrada (para no duplicar)
-        const yaExiste = db.some(item => item.url === userData.url);
-        if (yaExiste) {
-            console.log("⚠️ La URL ya está registrada. Ignorando...");
-            process.exit(0);
-        }
-
-        // 6. Añadir la nueva URL a la base de datos
-        db.push({
-            url: userData.url,
-            title: userData.title,
-            description: userData.description || "Sin descripción.",
-            category: userData.category || "Otro",
-            owner: userData.owner || "Desconocido",
-            date: new Date().toISOString()
-        });
-
-        // 7. Guardar la base de datos actualizada
-        fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
-        console.log(`✅ [Chronioñ Bot] URL registrada con éxito: ${userData.url}`);
-
-        // 8. (Opcional) Restaurar el template para el próximo usuario
-        const templateOriginal = {
-            url: "https://tu-sitio-web.com",
-            title: "Título de tu sitio",
-            description: "Descripción corta...",
-            category: "Tecnología",
-            owner: "TuNombreDeUsuarioGitHub"
-        };
-        fs.writeFileSync(USER_FILE, JSON.stringify(templateOriginal, null, 2));
-        console.log("🔄 Template restaurado para el próximo PR.");
-
+        return userData;
     } catch (error) {
-        console.error("❌ Error procesando el JSON:", error.message);
-        process.exit(1);
+        console.error(`❌ Error leyendo ${path.basename(filePath)}:`, error.message);
+        return false;
     }
 }
 
-procesarURL();
+function main() {
+    console.log("🤖 [Chronioñ Bot] Iniciando escaneo de la carpeta url-register...");
+
+    // 1. Verificar que la carpeta existe
+    if (!fs.existsSync(REGISTER_DIR)) {
+        console.error("❌ La carpeta url-register no existe.");
+        process.exit(1);
+    }
+
+    // 2. Leer todos los archivos de la carpeta
+    const files = fs.readdirSync(REGISTER_DIR);
+    const jsonFiles = files.filter(file => file.endsWith('.json') && file !== 'template.json');
+
+    if (jsonFiles.length === 0) {
+        console.log("⚠️ No se encontraron nuevos archivos JSON para procesar.");
+        process.exit(0);
+    }
+
+    // 3. Cargar la base de datos actual (o crearla si no existe)
+    let db = [];
+    if (fs.existsSync(DB_FILE)) {
+        db = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+    }
+
+    let urlsAñadidas = 0;
+
+    // 4. Procesar cada archivo
+    jsonFiles.forEach(file => {
+        const filePath = path.join(REGISTER_DIR, file);
+        const userData = procesarArchivo(filePath);
+
+        if (userData) {
+            // Comprobar si la URL ya está registrada
+            const yaExiste = db.some(item => item.url === userData.url);
+            
+            if (yaExiste) {
+                console.log(`⚠️ [${file}] La URL ${userData.url} ya está registrada. Ignorando.`);
+            } else {
+                // Añadir a la base de datos
+                db.push({
+                    url: userData.url,
+                    title: userData.title,
+                    description: userData.description || "Sin descripción.",
+                    category: userData.category || "Otro",
+                    owner: userData.owner || "Desconocido",
+                    date: new Date().toISOString()
+                });
+                urlsAñadidas++;
+                console.log(`✅ [${file}] URL registrada: ${userData.url}`);
+            }
+
+            // Borrar el archivo del usuario después de procesarlo
+            fs.unlinkSync(filePath);
+            console.log(`🗑️ Archivo ${file} eliminado.`);
+        }
+    });
+
+    // 5. Guardar la base de datos actualizada
+    if (urlsAñadidas > 0) {
+        fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
+        console.log(`\n🎉 ¡Éxito! Se añadieron ${urlsAñadidas} URLs nuevas.`);
+    } else {
+        console.log("\n⚠️ No se añadieron URLs nuevas.");
+    }
+}
+
+main();
