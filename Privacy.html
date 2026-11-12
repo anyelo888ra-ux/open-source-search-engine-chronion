@@ -39,10 +39,10 @@
 
     <main>
         <h1>Política de Privacidad</h1>
-        <p class="subtitle">Última actualización: Septiembre 2026 • Chronioñ Search Project</p>
+        <p class="subtitle">Última actualización: Noviembre 2026 • Chronioñ Search Project</p>
 
         <div class="highlight-box">
-            <strong>Resumen de privacidad:</strong> Chronioñ Search es un motor de búsqueda privado y de código abierto alojado en GitHub Pages. No rastreamos tus búsquedas, no almacenamos tu dirección IP y no vendemos tu información a terceros.
+            <strong>Resumen de privacidad:</strong> Chronioñ Search es un motor de búsqueda privado y de código abierto alojado en GitHub Pages. No rastreamos tus búsquedas, no almacenamos tu dirección IP en servidores centrales y no vendemos tu información a terceros.
         </div>
 
         <section>
@@ -56,21 +56,48 @@
         </section>
 
         <section>
-            <h2>2. Procesamiento local y Modo IA (Pure JS)</h2>
-            <p>El módulo de Inteligencia Artificial (Modo IA) de Chronioñ funciona <strong>100% en el lado del cliente (tu navegador)</strong> utilizando JavaScript ejecutable de forma local. Esto significa que:</p>
+            <h2>2. Modo Incógnito (Privacidad Total)</h2>
+            <p>Chronioñ cuenta con un <strong>Modo Incógnito</strong> diseñado para no dejar rastro:</p>
             <ul>
-                <li>No requerimos ni utilizamos API Keys externas que recopilen tus peticiones en servidores de terceros.</li>
-                <li>Tus datos no salen de tu propio navegador para entrenar modelos de IA externos.</li>
+                <li>No guarda el historial de búsqueda ni el chat en LocalStorage.</li>
+                <li>Al cerrar la pestaña, todos los datos se borran de la memoria.</li>
+                <li>El Ban-Bot-18 no actúa en este modo (excepto si detecta contenido +18).</li>
             </ul>
         </section>
 
         <section>
-            <h2>3. Consultas a la Web Abierta</h2>
-            <p>Para mostrar los resultados en pantalla, el navegador solicita los datos directamente desde fuentes públicas de búsqueda mediante solicitudes cifradas (HTTPS). Estas peticiones únicamente reciben los datos necesarios para generar la lista de resultados en tu pantalla en tiempo real.</p>
+            <h2>3. Procesamiento local y Modo IA</h2>
+            <p>El módulo de Inteligencia Artificial (Modo IA) de Chronioñ funciona <strong>100% en el lado del cliente (tu navegador)</strong> utilizando JavaScript ejecutable de forma local. Esto significa que:</p>
+            <ul>
+                <li>No requerimos ni utilizamos API Keys externas que recopilen tus peticiones en servidores de terceros.</li>
+                <li>Tus datos no salen de tu propio navegador para entrenar modelos de IA externos.</li>
+                <li>El historial del chat se guarda en <strong>tu propio dispositivo</strong> (LocalStorage) y puedes borrarlo en cualquier momento.</li>
+            </ul>
         </section>
 
         <section>
-            <h2>4. Código Abierto y Transparencia</h2>
+            <h2>4. El Ban-Bot-18 y la Moderación</h2>
+            <p>Chronioñ cuenta con un sistema de moderación global (<strong>Ban-Bot-18</strong>) que detecta búsquedas de contenido +18 en todos los HTML. Si detecta una infracción:</p>
+            <ul>
+                <li>Bloquea la pantalla del usuario.</li>
+                <li>Registra la <strong>IP simulada</strong> del usuario (puede ser real si se usa la API de ipify).</li>
+                <li>Aplica un baneo de 24 horas en LocalStorage.</li>
+                <li>El Ban-Bot <strong>no envía datos a servidores externos</strong>. Todo se procesa localmente.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>5. Consultas a la Web Abierta (Wikipedia y DuckDuckGo)</h2>
+            <p>Para mostrar los resultados en pantalla, el navegador solicita los datos directamente desde fuentes públicas (Wikipedia, DuckDuckGo, YouTube, Google News) mediante solicitudes cifradas (HTTPS). Estas peticiones únicamente reciben los datos necesarios para generar la lista de resultados en tu pantalla en tiempo real.</p>
+        </section>
+
+        <section>
+            <h2>6. Registro de URLs (Comunidad)</h2>
+            <p>El sistema de registro de URLs permite a los usuarios enviar sus sitios web a través de Pull Requests en GitHub. <strong>Chronioñ no recopila datos personales</strong> en este proceso; solo se almacena la URL, el título y la descripción proporcionados voluntariamente por el dueño del sitio.</p>
+        </section>
+
+        <section>
+            <h2>7. Código Abierto y Transparencia</h2>
             <p>Todo el código fuente de Chronioñ Search es completamente transparente y está disponible en GitHub. Cualquier usuario o desarrollador puede auditar el código para verificar que cumple con estos estándares de privacidad.</p>
         </section>
     </main>
