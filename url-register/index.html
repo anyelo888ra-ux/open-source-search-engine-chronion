@@ -13,7 +13,8 @@
         button { width: 100%; padding: 14px; background: #8ab4f8; color: #000; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.2s; }
         button:hover { background: #aecbfa; }
         .step { margin-bottom: 20px; padding: 15px; background: rgba(138, 180, 248, 0.1); border-left: 4px solid #8ab4f8; border-radius: 4px; font-size: 14px; }
-        .code-box { background: #000; color: #00ff00; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 13px; white-space: pre-wrap; display: none; margin-top: 20px; border: 1px solid #333; }
+        .code-box { background: #000; color: #00ff00; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 13px; white-space: pre-wrap; display: none; margin-top: 20px; border: 1px solid #333; position: relative; }
+        .copy-btn { position: absolute; top: 10px; right: 10px; background: #8ab4f8; color: #000; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -25,10 +26,10 @@
             <strong>Paso 1:</strong> Haz un <b>Fork</b> de este repositorio en GitHub.
         </div>
         <div class="step">
-            <strong>Paso 2:</strong> Rellena el formulario de abajo y copia el resultado.
+            <strong>Paso 2:</strong> Rellena el formulario de abajo y haz clic en <b>Generar JSON</b>.
         </div>
         <div class="step">
-            <strong>Paso 3:</strong> Ve a la pestaña <b>Pull Requests</b>, haz clic en <b>New Pull Request</b>, pega el texto generado y marca las casillas.
+            <strong>Paso 3:</strong> En tu Fork, ve a la carpeta <code>url-register/</code>, haz clic en <b>Add file > Create new file</b>, ponle un nombre (ej. <code>mi-web.json</code>), pega el código generado y haz tu <b>Pull Request</b>.
         </div>
 
         <input type="text" id="url" placeholder="URL completa (https://tu-web.com)">
@@ -42,46 +43,49 @@
             <option value="Otro">Otro</option>
         </select>
 
-        <button onclick="generarTexto()">Generar Texto para Pull Request</button>
+        <button onclick="generarJSON()">Generar JSON para Registro</button>
 
-        <div class="code-box" id="result-box"></div>
+        <div class="code-box" id="result-box">
+            <button class="copy-btn" onclick="copiarJSON()">Copiar</button>
+            <pre id="json-text"></pre>
+        </div>
     </div>
 
     <script>
-        function generarTexto() {
+        function generarJSON() {
             const url = document.getElementById('url').value.trim();
             const title = document.getElementById('title').value.trim();
             const desc = document.getElementById('desc').value.trim();
             const cat = document.getElementById('category').value;
 
             if (!url || !title) return alert("La URL y el Título son obligatorios.");
+            if (!url.startsWith('http')) return alert("La URL debe empezar con http:// o https://");
 
-            const texto = `
-**URL a registrar:** 
-${url}
+            // Crear el objeto JSON
+            const jsonData = {
+                url: url,
+                title: title,
+                description: desc || "Sin descripción.",
+                category: cat,
+                owner: "TuUsuarioDeGitHub" // El usuario debería cambiarlo, pero le ponemos un placeholder
+            };
 
-**Título de la Web:** 
-${title}
-
-**Descripción corta:** 
-${desc}
-
-**Categoría:** 
-${cat}
-
-### ✅ Verificación Obligatoria (Marca con una X)
-
-- [ ] Confirmo que soy el dueño de esta URL o tengo permiso para registrarla.
-- [ ] Confirmo que el contenido de la URL es seguro y NO contiene contenido +18, malware, phishing o material ilegal.
-- [ ] Entiendo que el administrador de Chronioñ revisará mi URL manualmente y puede rechazarla sin previo aviso.
-- [ ] Acepto que mi URL sea indexada y mostrada en los resultados de búsqueda de Chronioñ.
-            `;
+            const jsonString = JSON.stringify(jsonData, null, 2);
 
             const box = document.getElementById('result-box');
             box.style.display = 'block';
-            box.innerText = texto;
-            navigator.clipboard.writeText(texto);
-            alert("¡Texto copiado al portapapeles! Pégalo en tu Pull Request de GitHub.");
+            document.getElementById('json-text').innerText = jsonString;
+            
+            // Guardar en el portapapeles
+            navigator.clipboard.writeText(jsonString);
+            
+            alert("¡JSON generado y copiado al portapapeles!\n\nAhora crea un archivo .json en la carpeta url-register de tu Fork y pégalo ahí.");
+        }
+
+        function copiarJSON() {
+            const text = document.getElementById('json-text').innerText;
+            navigator.clipboard.writeText(text);
+            alert("¡JSON copiado de nuevo!");
         }
     </script>
 </body>
