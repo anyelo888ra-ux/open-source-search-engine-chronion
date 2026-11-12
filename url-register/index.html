@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrar URL - Chronioñ Search</title>
+    <style>
+        body { background: #202124; color: #bdc1c6; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { background: #303134; padding: 40px; border-radius: 16px; max-width: 600px; width: 90%; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h1 { color: #8ab4f8; margin-bottom: 10px; }
+        p { line-height: 1.6; font-size: 14px; }
+        input, textarea, select { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #5f6368; background: #202124; color: #fff; outline: none; box-sizing: border-box; }
+        button { width: 100%; padding: 14px; background: #8ab4f8; color: #000; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.2s; }
+        button:hover { background: #aecbfa; }
+        .step { margin-bottom: 20px; padding: 15px; background: rgba(138, 180, 248, 0.1); border-left: 4px solid #8ab4f8; border-radius: 4px; font-size: 14px; }
+        .code-box { background: #000; color: #00ff00; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 13px; white-space: pre-wrap; display: none; margin-top: 20px; border: 1px solid #333; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Registrar tu Web en Chronioñ</h1>
+        <p>Si quieres que tu página aparezca en los resultados de Chronioñ Search, sigue estos pasos:</p>
+
+        <div class="step">
+            <strong>Paso 1:</strong> Haz un <b>Fork</b> de este repositorio en GitHub.
+        </div>
+        <div class="step">
+            <strong>Paso 2:</strong> Rellena el formulario de abajo y copia el resultado.
+        </div>
+        <div class="step">
+            <strong>Paso 3:</strong> Ve a la pestaña <b>Pull Requests</b>, haz clic en <b>New Pull Request</b>, pega el texto generado y marca las casillas.
+        </div>
+
+        <input type="text" id="url" placeholder="URL completa (https://tu-web.com)">
+        <input type="text" id="title" placeholder="Título de tu web">
+        <input type="text" id="desc" placeholder="Descripción corta (máx 100 caracteres)">
+        <select id="category">
+            <option value="Tecnología">Tecnología</option>
+            <option value="Juegos">Juegos</option>
+            <option value="Educación">Educación</option>
+            <option value="Entretenimiento">Entretenimiento</option>
+            <option value="Otro">Otro</option>
+        </select>
+
+        <button onclick="generarTexto()">Generar Texto para Pull Request</button>
+
+        <div class="code-box" id="result-box"></div>
+    </div>
+
+    <script>
+        function generarTexto() {
+            const url = document.getElementById('url').value.trim();
+            const title = document.getElementById('title').value.trim();
+            const desc = document.getElementById('desc').value.trim();
+            const cat = document.getElementById('category').value;
+
+            if (!url || !title) return alert("La URL y el Título son obligatorios.");
+
+            const texto = `
+**URL a registrar:** 
+${url}
+
+**Título de la Web:** 
+${title}
+
+**Descripción corta:** 
+${desc}
+
+**Categoría:** 
+${cat}
+
+### ✅ Verificación Obligatoria (Marca con una X)
+
+- [ ] Confirmo que soy el dueño de esta URL o tengo permiso para registrarla.
+- [ ] Confirmo que el contenido de la URL es seguro y NO contiene contenido +18, malware, phishing o material ilegal.
+- [ ] Entiendo que el administrador de Chronioñ revisará mi URL manualmente y puede rechazarla sin previo aviso.
+- [ ] Acepto que mi URL sea indexada y mostrada en los resultados de búsqueda de Chronioñ.
+            `;
+
+            const box = document.getElementById('result-box');
+            box.style.display = 'block';
+            box.innerText = texto;
+            navigator.clipboard.writeText(texto);
+            alert("¡Texto copiado al portapapeles! Pégalo en tu Pull Request de GitHub.");
+        }
+    </script>
+</body>
+</html>
