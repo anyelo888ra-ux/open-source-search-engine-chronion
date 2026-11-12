@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chronioñ - Búsqueda Incógnita</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        body { background-color: #0d0e10; color: #e3e3e3; min-height: 100vh; display: flex; flex-direction: column; }
+        
+        /* Header */
+        header { display: flex; align-items: center; padding: 16px 24px; border-bottom: 1px solid #2a2b2f; gap: 24px; background: #141517; }
+        .logo-link { height: 30px; display: flex; align-items: center; text-decoration: none; }
+        .logo-link img { height: 100%; width: auto; }
+        
+        .search-box { flex: 1; max-width: 690px; }
+        .search-box form { display: flex; }
+        input[type="text"] {
+            width: 100%; padding: 10px 18px; font-size: 15px; border-radius: 24px;
+            border: 1px solid #ea4335; background-color: #1e1f20; color: #e3e3e3; outline: none;
+        }
+        input[type="text"]:focus { border-color: #f28b82; }
+
+        /* Tabs */
+        .nav-tabs { display: flex; gap: 20px; padding: 12px 160px; border-bottom: 1px solid #2a2b2f; font-size: 14px; background: #141517; }
+        .tab { color: #9aa0a6; text-decoration: none; padding-bottom: 8px; border-bottom: 3px solid transparent; cursor: pointer; }
+        .tab.active { color: #ea4335; border-color: #ea4335; font-weight: 500; }
+        .tab.ai-tab { color: #ea4335; font-weight: bold; }
+
+        /* Banner de Incógnito */
+        .incognito-banner { background: rgba(234, 67, 53, 0.1); border-bottom: 1px solid rgba(234, 67, 53, 0.3); color: #ea4335; text-align: center; padding: 10px; font-size: 13px; display: flex; justify-content: center; align-items: center; gap: 10px; }
+        .incognito-banner span { font-weight: bold; }
+
+        /* Layout */
+        .main-layout { display: flex; max-width: 1100px; margin-left: 160px; padding: 20px 0; flex: 1; gap: 40px; }
+        .results-column { flex: 1; max-width: 680px; }
+        .knowledge-column { width: 350px; display: none; }
+        
+        .status-text { font-size: 14px; color: #9aa0a6; margin-bottom: 20px; }
+
+        /* Tarjeta Modo IA */
+        .ai-overview-card {
+            background: #1e1f20; border: 1px solid #2a2b2f; border-radius: 12px; padding: 16px 20px;
+            margin-bottom: 24px; border-left: 4px solid #ea4335;
+        }
+        .ai-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-weight: 600; color: #ea4335; font-size: 15px; }
+        .ai-content { font-size: 15px; color: #e3e3e3; line-height: 1.6; }
+
+        /* Resultados */
+        .result-item { margin-bottom: 28px; }
+        .result-site { font-size: 12px; color: #bdc1c6; margin-bottom: 4px; word-break: break-all; }
+        .result-title { font-size: 20px; color: #ea4335; text-decoration: none; display: inline-block; margin-bottom: 6px; }
+        .result-title:hover { text-decoration: underline; }
+        .result-snippet { font-size: 14px; color: #bdc1c6; line-height: 1.5; }
+        .result-img { max-width: 100px; border-radius: 8px; float: left; margin-right: 15px; margin-bottom: 5px; }
+
+        /* PANEL DE CONOCIMIENTO */
+        .knowledge-panel { background: #1e1f20; border: 1px solid #2a2b2f; border-radius: 12px; overflow: hidden; }
+        .kg-header { padding: 20px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid #2a2b2f; }
+        .kg-title { font-size: 24px; font-weight: 500; color: #fff; }
+        .kg-desc { font-size: 14px; line-height: 1.5; color: #e3e3e3; }
+        .kg-details { padding: 15px 20px; }
+        .kg-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #2a2b2f; font-size: 14px; }
+        .kg-related { padding: 20px; border-top: 1px solid #2a2b2f; }
+        .kg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .kg-card { background: #2a2b2f; border-radius: 8px; padding: 10px; text-align: center; text-decoration: none; color: #e3e3e3; }
+        .kg-card img { width: 60px; height: 60px; border-radius: 8px; object-fit: contain; margin-bottom: 8px; }
+
+        @media (max-width: 900px) {
+            .main-layout { flex-direction: column; margin-left: 20px; }
+            .nav-tabs { padding: 12px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Banner de Incógnito -->
+    <div class="incognito-banner">
+        <span>🕵️‍♂️ Modo Incógnito:</span> Tu historial de búsqueda no se guardará en este dispositivo.
+    </div>
+
+    <header>
+        <a href="incognito.html" class="logo-link">
+            <b style="color:#ea4335; font-size:20px;">Chronioñ</b>
+        </a>
+        <div class="search-box">
+            <form action="incognito-search.html" method="GET">
+                <input type="text" id="searchInput" name="q" required autocomplete="off" placeholder="Busca de forma anónima...">
+            </form>
+        </div>
+    </header>
+
+    <div class="nav-tabs">
+        <a class="tab active" id="tab-todo" onclick="switchTab('todo')">Todo</a>
+        <a class="tab ai-tab" id="tab-ia" onclick="switchTab('ia')">✨ Modo IA</a>
+        <a class="tab" id="tab-img" onclick="switchTab('img')">Imágenes</a>
+    </div>
+
+    <div class="main-layout">
+        <main class="results-column" id="results">
+            <div class="status-text" id="status">Cargando...</div>
+        </main>
+        <aside class="knowledge-column" id="knowledge-panel"></aside>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const query = urlParams.get('q');
+        const container = document.getElementById('results');
+        const statusEl = document.getElementById('status');
+        const kgPanel = document.getElementById('knowledge-panel');
+        let currentMode = 'todo';
+
+        if (query) {
+            document.getElementById('searchInput').value = query;
+            document.title = `${query} - Búsqueda Incógnita en Chronioñ`;
+            executeSearch(query);
+        } else {
+            statusEl.innerText = 'Escribe algo en la barra para buscar de forma anónima.';
+        }
+
+        function switchTab(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(`tab-${mode}`).classList.add('active');
+            if (query) executeSearch(query);
+        }
+
+        async function executeSearch(q) {
+            container.innerHTML = `<div class="status-text">Buscando "${q}" de forma anónima...</div>`;
+            kgPanel.style.display = 'none';
+
+            if (currentMode === 'img') {
+                // Búsqueda de imágenes con Wikipedia
+                try {
+                    const wikiUrl = `https://es.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(q)}&gsrlimit=10&prop=pageimages&pithumbsize=200&format=json&origin=*`;
+                    const response = await fetch(wikiUrl);
+                    const data = await response.json();
+
+                    if (!data.query || !data.query.pages) {
+                        container.innerHTML = `<div class="status-text">No se encontraron imágenes para "${q}".</div>`;
+                        return;
+                    }
+
+                    const pages = Object.values(data.query.pages);
+                    let imgHtml = `<div class="status-text">Imágenes para "${q}"</div><div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:10px;">`;
+                    let hasImages = false;
+                    pages.forEach(p => {
+                        if (p.thumbnail && p.thumbnail.source) {
+                            hasImages = true;
+                            imgHtml += `<a href="${p.thumbnail.source}" target="_blank" style="background:#2a2b2f; padding:5px; border-radius:8px; text-align:center; text-decoration:none; color:#fff;">
+                                <img src="${p.thumbnail.source}" style="width:100%; height:120px; object-fit:cover; border-radius:4px;">
+                                <p style="font-size:12px; margin-top:5px;">${p.title}</p>
+                            </a>`;
+                        }
+                    });
+                    imgHtml += `</div>`;
+                    if (!hasImages) imgHtml = `<div class="status-text">No se encontraron imágenes para "${q}".</div>`;
+                    container.innerHTML = imgHtml;
+                    return;
+                } catch (e) {
+                    container.innerHTML = `<div class="status-text">Error al buscar imágenes.</div>`;
+                    return;
+                }
+            }
+
+            // Búsqueda Normal e IA
+            try {
+                const wikiUrl = `https://es.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(q)}&gsrlimit=10&prop=extracts|pageimages&exintro&explaintext&pithumbsize=200&format=json&origin=*`;
+                const response = await fetch(wikiUrl);
+                const data = await response.json();
+
+                if (!data.query || !data.query.pages) {
+                    container.innerHTML = `<div class="status-text">No hay resultados para "${q}".</div>`;
+                    return;
+                }
+
+                const pages = Object.values(data.query.pages);
+
+                // MODO IA
+                if (currentMode === 'ia') {
+                    const mainArticle = pages[0];
+                    const aiSummary = mainArticle.extract || "No hay un resumen disponible.";
+                    container.innerHTML = `
+                        <div class="ai-overview-card">
+                            <div class="ai-header"><span>✨</span> Visión general (Anónima)</div>
+                            <div class="ai-content"><strong>${mainArticle.title}:</strong> ${aiSummary}</div>
+                        </div>
+                    `;
+                    statusEl.innerText = `Resultados de IA para "${q}"`;
+                    return;
+                }
+
+                // MODO TODO
+                let html = `<div class="status-text">Aproximadamente ${pages.length * 10} resultados para "${q}"</div>`;
+                
+                if (pages[0].extract) {
+                    const shortExtract = pages[0].extract.substring(0, 200) + "...";
+                    html += `<div class="ai-overview-card"><div class="ai-header"><span>✨</span> Resumen rápido (Incógnito)</div><div class="ai-content">${shortExtract}</div></div>`;
+                }
+
+                pages.forEach(p => {
+                    const imgHtml = p.thumbnail ? `<img src="${p.thumbnail.source}" class="result-img">` : '';
+                    const extract = p.extract ? (p.extract.length > 200 ? p.extract.substring(0, 200) + "..." : p.extract) : "Sin descripción.";
+                    html += `
+                        <div class="result-item">
+                            <div class="result-site" style="clear:both;">🌐 es.wikipedia.org/wiki/${encodeURIComponent(p.title)}</div>
+                            <a href="https://es.wikipedia.org/wiki/${encodeURIComponent(p.title)}" class="result-title" target="_blank">${p.title}</a>
+                            <div class="result-snippet">${imgHtml}${extract}</div>
+                        </div>
+                    `;
+                });
+
+                container.innerHTML = html;
+
+                if (pages[0].thumbnail) {
+                    generateKnowledgeGraph(pages[0]);
+                }
+
+            } catch (error) {
+                container.innerHTML = `<div class="status-text">Error de conexión. Intenta de nuevo.</div>`;
+            }
+        }
+
+        function generateKnowledgeGraph(page) {
+            kgPanel.style.display = 'block';
+            kgPanel.innerHTML = `
+                <div class="knowledge-panel">
+                    <div class="kg-header">
+                        <div style="display:flex; align-items:center; gap:15px;">
+                            <img src="${page.thumbnail.source}" style="width:60px; height:60px; border-radius:8px; object-fit:cover;">
+                            <div><div class="kg-title">${page.title}</div><div style="font-size:13px; color:#bdc1c6;">Entidad / Artículo</div></div>
+                        </div>
+                        <div class="kg-desc">${page.extract ? page.extract.substring(0, 150) + '...' : ''}</div>
+                    </div>
+                    <div class="kg-related">
+                        <div style="font-size: 16px; color: #fff; margin-bottom: 15px;">También se buscó</div>
+                        <div class="kg-grid">
+                            <a href="incognito-search.html?q=ChatGPT" class="kg-card"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/ChatGPT_logo.svg/120px-ChatGPT_logo.svg.png"><span>ChatGPT</span></a>
+                            <a href="incognito-search.html?q=Gemini" class="kg-card"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Google_Gemini_logo.svg/120px-Google_Gemini_logo.svg.png"><span>Gemini</span></a>
+                            <a href="incognito-search.html?q=DeepSeek" class="kg-card"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/DeepSeek_logo.svg/120px-DeepSeek_logo.svg.png"><span>DeepSeek</span></a>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
