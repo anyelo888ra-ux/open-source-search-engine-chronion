@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chronioñ - Modo Incógnito</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        
+        :root {
+            --bg-color: #0d0e10;
+            --text-color: #e3e3e3;
+            --search-bg: #1e1f20;
+            --search-border: #ea4335;
+            --search-hover: #2a2b2f;
+            --btn-bg: #2a2b2f;
+            --btn-text: #e3e3e3;
+            --accent-color: #ea4335;
+            --footer-bg: #141517;
+        }
+
+        body { background-color: var(--bg-color); color: var(--text-color); display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden; }
+        
+        /* Banner de Incógnito */
+        .incognito-banner { background: rgba(234, 67, 53, 0.1); border-bottom: 1px solid rgba(234, 67, 53, 0.3); color: #ea4335; text-align: center; padding: 10px; font-size: 13px; display: flex; justify-content: center; align-items: center; gap: 10px; }
+        .incognito-banner span { font-weight: bold; }
+
+        main { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; width: 100%; }
+        
+        /* Logo */
+        .logo-container { margin-bottom: 30px; display: flex; flex-direction: column; align-items: center; gap: 10px; min-height: 120px; width: 100%; max-width: 450px; }
+        .logo-svg { width: 100%; height: auto; filter: drop-shadow(0 0 20px rgba(234, 67, 53, 0.2)); transition: 0.3s; }
+        .logo-svg:hover { filter: drop-shadow(0 0 30px var(--accent-color)); }
+
+        /* Buscador */
+        .search-form { width: 100%; max-width: 650px; display: flex; flex-direction: column; align-items: center; position: relative; }
+        .search-input-wrapper { width: 100%; position: relative; display: flex; align-items: center; background: var(--search-bg); border: 1px solid var(--search-border); border-radius: 24px; padding: 5px 10px 5px 20px; transition: 0.2s; }
+        .search-input-wrapper:hover, .search-input-wrapper:focus-within { background-color: var(--search-hover); border-color: transparent; box-shadow: 0 1px 6px rgba(0,0,0,0.5); }
+        
+        input[type="text"] { flex: 1; padding: 10px 0; font-size: 16px; border: none; background: transparent; color: var(--text-color); outline: none; }
+
+        /* Botón Modo IA */
+        .ai-mode-btn { display: flex; align-items: center; gap: 6px; background: transparent; border: 1px solid var(--search-border); color: var(--accent-color); padding: 8px 14px; border-radius: 20px; cursor: pointer; font-size: 14px; font-weight: 500; transition: 0.2s; margin-left: 10px; }
+        .ai-mode-btn:hover { background: rgba(234, 67, 53, 0.1); border-color: var(--accent-color); }
+        .ai-mode-btn svg { width: 16px; height: 16px; fill: currentColor; }
+
+        /* Botones de acción */
+        .buttons-group { margin-top: 30px; display: flex; gap: 12px; }
+        button.action-btn { background-color: var(--btn-bg); border: 1px solid transparent; color: var(--btn-text); padding: 10px 20px; font-size: 14px; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+        button.action-btn:hover { border-color: var(--search-border); color: var(--accent-color); }
+
+        /* Footer */
+        footer { background-color: var(--footer-bg); font-size: 14px; color: var(--text-color); width: 100%; }
+        .footer-location { padding: 15px 30px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .footer-links { display: flex; justify-content: space-between; padding: 15px 30px; flex-wrap: wrap; gap: 15px; }
+        .footer-links a { color: var(--text-color); text-decoration: none; opacity: 0.7; transition: 0.2s;}
+        .footer-links a:hover { text-decoration: underline; opacity: 1; color: var(--accent-color); }
+        .flex-gap { display: flex; gap: 25px; flex-wrap: wrap; }
+
+        @media (max-width: 600px) {
+            .logo-svg { width: 80%; }
+            .ai-mode-btn span { display: none; }
+            .footer-links { flex-direction: column; align-items: center; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Banner de Incógnito -->
+    <div class="incognito-banner">
+        <span>🕵️‍♂️ Modo Incógnito:</span> No se guardará ningún historial de búsqueda en tu dispositivo.
+    </div>
+
+    <main>
+        <!-- Contenedor del Logo (Incógnito) -->
+        <div class="logo-container" id="logo-container">
+            <svg class="logo-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 450 120">
+                <text x="10" y="90" font-family="'Product Sans', 'Montserrat', 'Segoe UI', sans-serif" font-size="88" font-weight="500" fill="#ea4335" letter-spacing="-2">
+                    Chronio<tspan fill="#ffffff">ñ</tspan>
+                </text>
+            </svg>
+        </div>
+
+        <!-- Formulario de Búsqueda -->
+        <form class="search-form" action="incognito-search.html" method="GET" onsubmit="handleSearch(event)">
+            <div class="search-input-wrapper">
+                <input type="text" id="main-search-input" name="q" placeholder="Busca de forma anónima..." required="" autofocus="" autocomplete="off">
+                
+                <!-- Botón Modo IA -->
+                <button type="button" class="ai-mode-btn" onclick="goToAIMode()" title="Hablar con Chronioñ IA">
+                    <svg viewBox="0 0 24 24"><path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z"></path></svg>
+                    <span>Modo IA</span>
+                </button>
+            </div>
+            
+            <div class="buttons-group">
+                <button type="submit" class="action-btn">Buscar (Incógnito)</button>
+                <button type="button" class="action-btn" onclick="location.href='incognito-search.html?q=Chronioñ+Browser'">Voy a tener suerte</button>
+            </div>
+        </form>
+    </main>
+
+    <footer>
+        <div class="footer-location" id="footer-location">Chronioñ Web Engine - Modo Incógnito © 2026</div>
+        <div class="footer-links">
+            <div class="flex-gap">
+                <a href="https://github.com/anyelo888ra-ux/open-source-search-engine-chronion" target="_blank">Código Fuente</a>
+                <a href="https://github.com/anyelo888ra-ux/chronion-browser" target="_blank">Chronioñ Browser (PC)</a>
+            </div>
+            <div class="flex-gap">
+                <a href="Privacy.html">Privacidad</a>
+                <a href="Conditions.html">Condiciones</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function handleSearch(e) {
+            e.preventDefault();
+            const query = document.getElementById('main-search-input').value.trim();
+            if (query) window.location.href = `incognito-search.html?q=${encodeURIComponent(query)}`;
+        }
+
+        function goToAIMode() {
+            const query = document.getElementById('main-search-input').value.trim();
+            if (query) window.location.href = `incognito-ai.html?q=${encodeURIComponent(query)}`;
+            else window.location.href = 'incognito-ai.html';
+        }
+    </script>
+</body>
+</html>
