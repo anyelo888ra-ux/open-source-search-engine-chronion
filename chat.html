@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chronioñ - Modo IA</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        body { background-color: #131314; color: #e3e3e3; height: 100vh; display: flex; overflow: hidden; }
+        
+        /* Sidebar */
+        .sidebar { width: 260px; background-color: #1e1f20; height: 100%; display: flex; flex-direction: column; padding: 15px; border-right: 1px solid #3c4043; transition: transform 0.3s; }
+        .new-chat-btn { background: transparent; border: none; color: #e3e3e3; font-size: 14px; display: flex; align-items: center; gap: 10px; padding: 10px; cursor: pointer; border-radius: 20px; transition: background 0.2s; margin-bottom: 20px; font-weight: 500; width: 100%; text-align: left;}
+        .new-chat-btn:hover { background: #2a2b2f; }
+        .sidebar-section-title { font-size: 12px; color: #9aa0a6; margin: 15px 10px 5px; font-weight: bold; }
+        .history-list { flex: 1; overflow-y: auto; }
+        .history-item { padding: 10px; font-size: 14px; color: #bdc1c6; cursor: pointer; border-radius: 8px; display: flex; align-items: center; gap: 10px; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
+        .history-item:hover { background: #2a2b2f; }
+        
+        /* Footer Sidebar (Login y Config) */
+        .sidebar-footer { padding-top: 15px; border-top: 1px solid #3c4043; display: flex; flex-direction: column; gap: 10px; }
+        .user-profile { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        .user-profile:hover { background: #2a2b2f; }
+        .user-avatar { width: 30px; height: 30px; border-radius: 50%; background: #5865F2; display: flex; align-items: center; justify-content: center; font-size: 16px; color: white; }
+        .user-name { font-size: 14px; color: #e3e3e3; font-weight: 500; }
+        .settings-btn { display: flex; align-items: center; gap: 10px; font-size: 14px; color: #bdc1c6; padding: 10px; border-radius: 8px; cursor: pointer; }
+        .settings-btn:hover { background: #2a2b2f; }
+
+        /* Main Chat Area */
+        .main-content { flex: 1; display: flex; flex-direction: column; position: relative; }
+        .top-bar { padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; }
+        .logo-container { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+        .logo-svg { width: 30px; height: 30px; }
+        
+        .chat-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; align-items: center; scroll-behavior: smooth; }
+        .chat-inner { width: 100%; max-width: 800px; display: flex; flex-direction: column; gap: 24px; margin-top: 20px; }
+        
+        .message { display: flex; gap: 15px; line-height: 1.6; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .message.user { justify-content: flex-end; }
+        .message.user .bubble { background: #2a2b2f; padding: 12px 18px; border-radius: 18px; max-width: 80%; color: #e3e3e3; }
+        .message.user .avatar { display: none; }
+        
+        .message.ai { justify-content: flex-start; }
+        .message.ai .avatar { width: 32px; height: 32px; border-radius: 50%; background: #1e1f20; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 18px;}
+        .message.ai .bubble { padding: 5px 0; max-width: 85%; color: #e3e3e3; font-size: 15px;}
+
+        /* Welcome Screen */
+        .welcome-screen { text-align: center; margin-top: 20vh; display: flex; flex-direction: column; align-items: center; width: 100%; }
+        .welcome-screen h1 { font-size: 32px; font-weight: 500; margin-bottom: 10px; background: linear-gradient(90deg, #8ab4f8, #d3e3fd); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        /* Input Area */
+        .input-area { width: 100%; max-width: 800px; padding: 20px; margin: 0 auto; }
+        .input-box { background: #1e1f20; border-radius: 24px; padding: 8px 10px 8px 20px; display: flex; align-items: center; border: 1px solid #3c4043; transition: border 0.2s; }
+        .input-box:focus-within { border-color: #8ab4f8; }
+        .input-box input { flex: 1; background: transparent; border: none; color: #e3e3e3; font-size: 16px; outline: none; padding: 10px 0; }
+        .send-btn { background: #8ab4f8; color: #131314; border: none; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: bold; font-size: 20px; transition: 0.2s; }
+        .send-btn:hover { background: #aecbfa; }
+        .send-btn:disabled { background: #3c4043; color: #9aa0a6; cursor: not-allowed; }
+
+        /* Modal Login Discord */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+        .modal-overlay.active { display: flex; }
+        .discord-modal { background: #313338; width: 480px; border-radius: 12px; padding: 30px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        .discord-modal h2 { color: #fff; margin-bottom: 10px; }
+        .discord-modal p { color: #b5bac1; font-size: 14px; margin-bottom: 20px; }
+        .discord-login-btn { background: #5865F2; color: white; border: none; width: 100%; padding: 12px; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.2s; }
+        .discord-login-btn:hover { background: #4752c4; }
+        .close-modal { background: transparent; border: none; color: #b5bac1; margin-top: 15px; cursor: pointer; font-size: 14px; }
+        .close-modal:hover { text-decoration: underline; }
+
+        /* Modal Configuración */
+        .settings-modal { background: #1e1f20; width: 500px; border-radius: 12px; padding: 25px; border: 1px solid #3c4043; }
+        .settings-modal h2 { color: #8ab4f8; margin-bottom: 20px; border-bottom: 1px solid #3c4043; padding-bottom: 10px;}
+        .setting-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; color: #e3e3e3; }
+        .setting-row select, .setting-row input { background: #2a2b2f; border: 1px solid #3c4043; color: white; padding: 8px; border-radius: 6px; outline: none; }
+        .btn-save { background: #8ab4f8; color: #131314; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
+
+        /* Typing */
+        .typing-indicator { display: flex; gap: 4px; align-items: center; height: 20px; }
+        .typing-indicator span { width: 6px; height: 6px; background-color: #8ab4f8; border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both; }
+        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+
+        @media (max-width: 768px) {
+            .sidebar { position: absolute; z-index: 10; transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .welcome-screen h1 { font-size: 24px; }
+            .discord-modal, .settings-modal { width: 90%; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <button class="new-chat-btn" onclick="window.location.href='chat.html'">
+            <span>✏️</span> Nueva conversación
+        </button>
+        <div class="sidebar-section-title">Reciente</div>
+        <div class="history-list" id="history-list"></div>
+        
+        <div class="sidebar-footer">
+            <!-- Perfil de Usuario -->
+            <div class="user-profile" id="user-profile" onclick="openLogin()">
+                <div class="user-avatar" id="user-avatar">👤</div>
+                <div class="user-name" id="user-name">Iniciar sesión</div>
+            </div>
+            <!-- Botón Configuración -->
+            <div class="settings-btn" onclick="openSettings()">
+                <span>⚙️</span> Configuración
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Chat -->
+    <main class="main-content">
+        <div class="top-bar">
+            <div class="logo-container" onclick="window.location.href='index.html'">
+                <!-- SVG Oficial de Chronioñ -->
+                <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#8ab4f8;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#d3e3fd;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <circle cx="50" cy="50" r="40" stroke="url(#grad1)" stroke-width="8" fill="none" />
+                    <circle cx="50" cy="50" r="15" fill="url(#grad1)" />
+                    <path d="M 50 10 L 50 30 M 50 70 L 50 90 M 10 50 L 30 50 M 70 50 L 90 50" stroke="url(#grad1)" stroke-width="6" stroke-linecap="round"/>
+                </svg>
+                <span style="color: #8ab4f8; font-weight: bold; font-size: 20px;">Chronioñ</span>
+            </div>
+        </div>
+        
+        <div class="chat-container" id="chat-container">
+            <!-- Mensajes -->
+        </div>
+
+        <div class="input-area">
+            <div class="input-box">
+                <input type="text" id="chat-input" placeholder="Haz una pregunta" autocomplete="off">
+                <button class="send-btn" id="send-btn" onclick="sendMessage()">↑</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL LOGIN DISCORD -->
+    <div class="modal-overlay" id="login-modal">
+        <div class="discord-modal">
+            <h2>Bienvenido a Chronioñ</h2>
+            <p>Inicia sesión para guardar tu historial de forma segura.</p>
+            <button class="discord-login-btn" onclick="fakeDiscordLogin()">
+                <svg width="24" height="24" viewBox="0 0 71 55" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M60.1 4.9A58.5 58.5 0 0045.4.2a.2.2 0 00-.2.1 40.7 40.7 0 00-1.8 3.7 54 54 0 00-16.2 0A38 38 0 0025.4.3a.2.2 0 00-.2-.1A58.4 58.4 0 0010.7 4.9a.2.2 0 00-.1.1C1.5 18.3-1 31.2.3 44a.2.2 0 00.1.2 58.8 58.8 0 0017.7 9 .2.2 0 00.3-.1 42 42 0 003.6-5.9.2.2 0 00-.1-.3 38.7 38.7 0 01-5.5-2.6.2.2 0 01-.1-.4c.4-.3.7-.6 1.1-1a.2.2 0 01.2 0 41.9 41.9 0 0035.6 0 .2.2 0 01.2 0l1.1 1a.2.2 0 01-.1.4 36.3 36.3 0 01-5.5 2.6.2.2 0 00-.1.3 47 47 0 003.6 5.9.2.2 0 00.3.1 58.6 58.6 0 0017.7-9 .2.2 0 00.1-.2c1.4-14.7-2.3-27.5-9.9-38.9a.2.2 0 00-.1-.1zM23.7 36.1c-3.5 0-6.3-3.2-6.3-7.1s2.8-7.1 6.3-7.1 6.4 3.2 6.3 7.1c0 3.9-2.8 7.1-6.3 7.1zm23.3 0c-3.5 0-6.3-3.2-6.3-7.1s2.8-7.1 6.3-7.1 6.4 3.2 6.3 7.1c0 3.9-2.8 7.1-6.3 7.1z" fill="#fff"/></svg>
+                Iniciar sesión con Discord
+            </button>
+            <button class="close-modal" onclick="closeLogin()">Continuar sin cuenta (Local)</button>
+        </div>
+    </div>
+
+    <!-- MODAL CONFIGURACIÓN -->
+    <div class="modal-overlay" id="settings-modal">
+        <div class="settings-modal">
+            <h2>⚙️ Configuración de Chronioñ</h2>
+            <div class="setting-row">
+                <span>Borrar todo el historial</span>
+                <button onclick="clearAllData()" style="background:#ea4335;color:white;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;">🗑️ Borrar</button>
+            </div>
+            <button class="btn-save" onclick="closeSettings()">Guardar y Cerrar</button>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // VARIABLES GLOBALES Y ESTADO
+        // ==========================================
+        const urlParams = new URLSearchParams(window.location.search);
+        const chatId = urlParams.get('q'); 
+        
+        let currentChat = null;
+        let allChats = JSON.parse(localStorage.getItem('chronion_chats')) || [];
+        let userProfile = JSON.parse(localStorage.getItem('chronion_user')) || null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderUserProfile();
+            renderHistorySidebar();
+
+            if (chatId) {
+                loadChat(chatId);
+            } else {
+                renderWelcomeScreen();
+            }
+
+            document.getElementById('chat-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !document.getElementById('send-btn').disabled) sendMessage();
+            });
+        });
+
+        // ==========================================
+        // LOGIN Y PERFIL DE USUARIO
+        // ==========================================
+        function renderUserProfile() {
+            const avatar = document.getElementById('user-avatar');
+            const name = document.getElementById('user-name');
+
+            if (userProfile) {
+                avatar.style.background = '#5865F2';
+                avatar.innerHTML = userProfile.avatarEmoji || '😎';
+                name.innerText = userProfile.name;
+            } else {
+                avatar.style.background = '#3c4043';
+                avatar.innerHTML = '👤';
+                name.innerText = 'Iniciar sesión';
+            }
+        }
+
+        function openLogin() {
+            if (!userProfile) document.getElementById('login-modal').classList.add('active');
+        }
+
+        function closeLogin() {
+            document.getElementById('login-modal').classList.remove('active');
+        }
+
+        function fakeDiscordLogin() {
+            const randomName = "Usuario_" + Math.floor(Math.random() * 9999);
+            const randomEmoji = ["😎", "🤖", "👾", "🐋", "🚀", "🦊"][Math.floor(Math.random() * 6)];
+            
+            userProfile = { 
+                id: 'discord_' + Date.now(), 
+                name: randomName, 
+                avatarEmoji: randomEmoji 
+            };
+            
+            localStorage.setItem('chronion_user', JSON.stringify(userProfile));
+            renderUserProfile();
+            closeLogin();
+        }
+
+        // ==========================================
+        // CONFIGURACIÓN
+        // ==========================================
+        function openSettings() {
+            document.getElementById('settings-modal').classList.add('active');
+        }
+
+        function closeSettings() {
+            document.getElementById('settings-modal').classList.remove('active');
+        }
+
+        function clearAllData() {
+            if(confirm("¿Estás seguro de que quieres borrar todo tu historial y cuenta local?")) {
+                localStorage.removeItem('chronion_chats');
+                localStorage.removeItem('chronion_user');
+                window.location.reload();
+            }
+        }
+
+        // ==========================================
+        // LÓGICA DE CHAT
+        // ==========================================
+        function renderHistorySidebar() {
+            const list = document.getElementById('history-list');
+            list.innerHTML = '';
+            allChats.sort((a, b) => b.timestamp - a.timestamp);
+            allChats.forEach(chat => {
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.innerHTML = `<span>💬</span> ${chat.title}`;
+                div.onclick = () => window.location.href = `chat.html?q=${chat.id}`;
+                list.appendChild(div);
+            });
+        }
+
+        function renderWelcomeScreen() {
+            const container = document.getElementById('chat-container');
+            container.innerHTML = `
+                <div class="welcome-screen">
+                    <h1>Hola ${userProfile ? userProfile.name : ''}, ¿qué tienes en mente?</h1>
+                </div>
+            `;
+        }
+
+        function loadChat(id) {
+            const chat = allChats.find(c => c.id === id);
+            if (!chat) {
+                window.history.replaceState({}, '', 'chat.html');
+                renderWelcomeScreen();
+                return;
+            }
+            
+            currentChat = chat;
+            const container = document.getElementById('chat-container');
+            container.innerHTML = `<div class="chat-inner" id="chat-inner"></div>`;
+            
+            chat.messages.forEach(msg => appendMessageToUI(msg.role, msg.text));
+            scrollToBottom();
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const sendBtn = document.getElementById('send-btn');
+            const text = input.value.trim();
+            if (!text) return;
+
+            input.value = '';
+            sendBtn.disabled = true;
+            
+            if (!currentChat) {
+                const newId = 'id' + Date.now().toString(36);
+                currentChat = { id: newId, title: text.substring(0, 30) + (text.length > 30 ? '...' : ''), timestamp: Date.now(), messages: [] };
+                allChats.push(currentChat);
+                saveChats();
+                window.history.replaceState({}, '', `chat.html?q=${newId}`);
+                
+                document.getElementById('chat-container').innerHTML = `<div class="chat-inner" id="chat-inner"></div>`;
+                renderHistorySidebar();
+            }
+
+            appendMessageToUI('user', text);
+            currentChat.messages.push({ role: 'user', text: text });
+            scrollToBottom();
+
+            const loadingId = 'loading-' + Date.now();
+            document.getElementById('chat-inner').innerHTML += `
+                <div class="message ai" id="${loadingId}">
+                    <div class="avatar">✨</div>
+                    <div class="bubble"><div class="typing-indicator"><span></span><span></span><span></span></div></div>
+                </div>
+            `;
+            scrollToBottom();
+
+            try {
+                const lowerText = text.toLowerCase();
+                let aiResponse = "";
+
+                // 1. Lógica de IP
+                if (lowerText.includes('mi ip') || lowerText.includes('mi dirección ip')) {
+                    aiResponse = `Para poder responderte, puedo buscarla, pero primero debes darme permiso en ⚙️ Configuración. (Simulado: 190.0.0.1).`;
+                } 
+                // 2. Saludos
+                else if (lowerText.match(/^(hola|qué tal|buenos días|buenas tardes|hey|quien eres|quién eres)/)) {
+                    aiResponse = `¡Hola${userProfile ? ' ' + userProfile.name : ''}! Soy Chronioñ IA. Puedo buscar información, responder preguntas o simplemente charlar. ¿De qué te gustaría hablar hoy?`;
+                } 
+                // 3. Búsqueda en Wikipedia
+                else {
+                    const wikiRes = await fetch(`https://es.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(text)}&gsrlimit=1&prop=extracts&exintro&explaintext&format=json&origin=*`);
+                    const data = await wikiRes.json();
+                    
+                    if (data.query && data.query.pages) {
+                        const page = Object.values(data.query.pages)[0];
+                        aiResponse = page.extract || "Parece que encontré el artículo, pero no puedo extraer su resumen.";
+                        if(aiResponse.length > 400) aiResponse = aiResponse.substring(0, 400) + "...";
+                    } else {
+                        aiResponse = "Parece que no hay una respuesta disponible para esta búsqueda. Prueba con otra pregunta más específica o diferente.";
+                    }
+                }
+
+                document.getElementById(loadingId).remove();
+
+                setTimeout(() => {
+                    appendMessageToUI('ai', aiResponse);
+                    currentChat.messages.push({ role: 'ai', text: aiResponse });
+                    currentChat.timestamp = Date.now();
+                    saveChats();
+                    renderHistorySidebar();
+                    scrollToBottom();
+                    sendBtn.disabled = false;
+                    input.focus();
+                }, 600);
+
+            } catch (error) {
+                document.getElementById(loadingId).remove();
+                appendMessageToUI('ai', "Error de conexión. Intenta de nuevo.");
+                sendBtn.disabled = false;
+            }
+        }
+
+        function appendMessageToUI(role, text) {
+            const inner = document.getElementById('chat-inner');
+            if (!inner) return;
+            const formattedText = text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+            if (role === 'user') {
+                inner.innerHTML += `<div class="message user"><div class="bubble">${formattedText}</div></div>`;
+            } else {
+                inner.innerHTML += `
+                    <div class="message ai">
+                        <div class="avatar">✨</div>
+                        <div class="bubble">${formattedText}</div>
+                    </div>
+                `;
+            }
+        }
+
+        function scrollToBottom() {
+            const container = document.getElementById('chat-container');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function saveChats() {
+            localStorage.setItem('chronion_chats', JSON.stringify(allChats));
+        }
+    </script>
+</body>
+</html>
