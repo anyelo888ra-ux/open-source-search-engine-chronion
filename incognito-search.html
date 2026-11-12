@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chronioñ - Búsqueda Incógnita</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
-        <!-- BAN-BOT-18 (Moderación Global) -->
     <script src="ban-bot-18.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
@@ -76,15 +75,12 @@
     </style>
 </head>
 <body>
-    <!-- Banner de Incógnito -->
     <div class="incognito-banner">
         <span>🕵️‍♂️ Modo Incógnito:</span> Tu historial de búsqueda no se guardará en este dispositivo.
     </div>
 
     <header>
-        <a href="incognito.html" class="logo-link">
-            <b style="color:#ea4335; font-size:20px;">Chronioñ</b>
-        </a>
+        <a href="incognito.html" class="logo-link"><b style="color:#ea4335; font-size:20px;">Chronioñ</b></a>
         <div class="search-box">
             <form action="incognito-search.html" method="GET">
                 <input type="text" id="searchInput" name="q" required autocomplete="off" placeholder="Busca de forma anónima...">
@@ -128,124 +124,50 @@
             if (query) executeSearch(query);
         }
 
+        // ==========================================
+        // NUEVA FUNCIÓN: BUSCAR EN LA DB LOCAL (INCÓGNITO)
+        // ==========================================
+        async function buscarEnDB(q) {
+            try {
+                const response = await fetch('urls-db.json');
+                const db = await response.json();
+                const lowerQ = q.toLowerCase();
+                
+                const resultados = db.filter(item => 
+                    item.title.toLowerCase().includes(lowerQ) || 
+                    item.description.toLowerCase().includes(lowerQ) ||
+                    item.url.toLowerCase().includes(lowerQ)
+                );
+
+                if (resultados.length > 0) {
+                    let html = `<div class="status-text">Resultados de la comunidad (Anónimos) para "${q}"</div>`;
+                    resultados.forEach(item => {
+                        html += `
+                            <div class="result-item">
+                                <div class="result-site">🌐 ${item.url}</div>
+                                <a href="${item.url}" class="result-title" target="_blank">${item.title}</a>
+                                <div class="result-snippet">${item.description}</div>
+                            </div>
+                        `;
+                    });
+                    return html;
+                }
+                return null;
+            } catch(e) { return null; }
+        }
+
         async function executeSearch(q) {
             container.innerHTML = `<div class="status-text">Buscando "${q}" de forma anónima...</div>`;
             kgPanel.style.display = 'none';
 
+            // BÚSQUEDA EN LA DB LOCAL (NUEVA)
+            const dbResults = await buscarEnDB(q);
+            if (dbResults) {
+                container.innerHTML = dbResults;
+                return;
+            }
+
             if (currentMode === 'img') {
                 // Búsqueda de imágenes con Wikipedia
                 try {
-                    const wikiUrl = `https://es.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(q)}&gsrlimit=10&prop=pageimages&pithumbsize=200&format=json&origin=*`;
-                    const response = await fetch(wikiUrl);
-                    const data = await response.json();
-
-                    if (!data.query || !data.query.pages) {
-                        container.innerHTML = `<div class="status-text">No se encontraron imágenes para "${q}".</div>`;
-                        return;
-                    }
-
-                    const pages = Object.values(data.query.pages);
-                    let imgHtml = `<div class="status-text">Imágenes para "${q}"</div><div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:10px;">`;
-                    let hasImages = false;
-                    pages.forEach(p => {
-                        if (p.thumbnail && p.thumbnail.source) {
-                            hasImages = true;
-                            imgHtml += `<a href="${p.thumbnail.source}" target="_blank" style="background:#2a2b2f; padding:5px; border-radius:8px; text-align:center; text-decoration:none; color:#fff;">
-                                <img src="${p.thumbnail.source}" style="width:100%; height:120px; object-fit:cover; border-radius:4px;">
-                                <p style="font-size:12px; margin-top:5px;">${p.title}</p>
-                            </a>`;
-                        }
-                    });
-                    imgHtml += `</div>`;
-                    if (!hasImages) imgHtml = `<div class="status-text">No se encontraron imágenes para "${q}".</div>`;
-                    container.innerHTML = imgHtml;
-                    return;
-                } catch (e) {
-                    container.innerHTML = `<div class="status-text">Error al buscar imágenes.</div>`;
-                    return;
-                }
-            }
-
-            // Búsqueda Normal e IA
-            try {
-                const wikiUrl = `https://es.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(q)}&gsrlimit=10&prop=extracts|pageimages&exintro&explaintext&pithumbsize=200&format=json&origin=*`;
-                const response = await fetch(wikiUrl);
-                const data = await response.json();
-
-                if (!data.query || !data.query.pages) {
-                    container.innerHTML = `<div class="status-text">No hay resultados para "${q}".</div>`;
-                    return;
-                }
-
-                const pages = Object.values(data.query.pages);
-
-                // MODO IA
-                if (currentMode === 'ia') {
-                    const mainArticle = pages[0];
-                    const aiSummary = mainArticle.extract || "No hay un resumen disponible.";
-                    container.innerHTML = `
-                        <div class="ai-overview-card">
-                            <div class="ai-header"><span>✨</span> Visión general (Anónima)</div>
-                            <div class="ai-content"><strong>${mainArticle.title}:</strong> ${aiSummary}</div>
-                        </div>
-                    `;
-                    statusEl.innerText = `Resultados de IA para "${q}"`;
-                    return;
-                }
-
-                // MODO TODO
-                let html = `<div class="status-text">Aproximadamente ${pages.length * 10} resultados para "${q}"</div>`;
-                
-                if (pages[0].extract) {
-                    const shortExtract = pages[0].extract.substring(0, 200) + "...";
-                    html += `<div class="ai-overview-card"><div class="ai-header"><span>✨</span> Resumen rápido (Incógnito)</div><div class="ai-content">${shortExtract}</div></div>`;
-                }
-
-                pages.forEach(p => {
-                    const imgHtml = p.thumbnail ? `<img src="${p.thumbnail.source}" class="result-img">` : '';
-                    const extract = p.extract ? (p.extract.length > 200 ? p.extract.substring(0, 200) + "..." : p.extract) : "Sin descripción.";
-                    html += `
-                        <div class="result-item">
-                            <div class="result-site" style="clear:both;">🌐 es.wikipedia.org/wiki/${encodeURIComponent(p.title)}</div>
-                            <a href="https://es.wikipedia.org/wiki/${encodeURIComponent(p.title)}" class="result-title" target="_blank">${p.title}</a>
-                            <div class="result-snippet">${imgHtml}${extract}</div>
-                        </div>
-                    `;
-                });
-
-                container.innerHTML = html;
-
-                if (pages[0].thumbnail) {
-                    generateKnowledgeGraph(pages[0]);
-                }
-
-            } catch (error) {
-                container.innerHTML = `<div class="status-text">Error de conexión. Intenta de nuevo.</div>`;
-            }
-        }
-
-        function generateKnowledgeGraph(page) {
-            kgPanel.style.display = 'block';
-            kgPanel.innerHTML = `
-                <div class="knowledge-panel">
-                    <div class="kg-header">
-                        <div style="display:flex; align-items:center; gap:15px;">
-                            <img src="${page.thumbnail.source}" style="width:60px; height:60px; border-radius:8px; object-fit:cover;">
-                            <div><div class="kg-title">${page.title}</div><div style="font-size:13px; color:#bdc1c6;">Entidad / Artículo</div></div>
-                        </div>
-                        <div class="kg-desc">${page.extract ? page.extract.substring(0, 150) + '...' : ''}</div>
-                    </div>
-                    <div class="kg-related">
-                        <div style="font-size: 16px; color: #fff; margin-bottom: 15px;">También se buscó</div>
-                        <div class="kg-grid">
-                            <a href="incognito-search.html?q=ChatGPT" class="kg-card"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/ChatGPT_logo.svg/120px-ChatGPT_logo.svg.png"><span>ChatGPT</span></a>
-                            <a href="incognito-search.html?q=Gemini" class="kg-card"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Google_Gemini_logo.svg/120px-Google_Gemini_logo.svg.png"><span>Gemini</span></a>
-                            <a href="incognito-search.html?q=DeepSeek" class="kg-card"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/DeepSeek_logo.svg/120px-DeepSeek_logo.svg.png"><span>DeepSeek</span></a>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-    </script>
-</body>
-</html>
+                    const wikiUrl = `https://es.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(q)}&gsrlimit=10&prop
