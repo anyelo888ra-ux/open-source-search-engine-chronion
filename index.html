@@ -96,11 +96,15 @@
 </head>
 <body>
     <main>
-        <!-- Contenedor del Logo -->
-        <div class="logo-container" id="logo-container">
-            <!-- Por defecto cargamos el logo original -->
-            <b style="font-size:40px; color:var(--accent-color);">Chronioñ</b>
-        </div>
+      <!-- Contenedor del Logo -->
+      <div class="logo-container" id="logo-container">
+      <!-- Logo SVG Oficial (Modo Normal) -->
+      <svg class="logo-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 450 120">
+        <text x="10" y="90" font-family="'Product Sans', 'Montserrat', 'Segoe UI', sans-serif" font-size="88" font-weight="500" fill="#ffffff" letter-spacing="-2">
+            Chronio<tspan fill="#ea4335">ñ</tspan>
+        </text>
+    </svg>
+</div>
 
         <!-- Formulario de Búsqueda -->
         <form class="search-form" action="search.html" method="GET" onsubmit="handleSearch(event)">
