@@ -5,10 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Búsqueda en Chronioñ</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
-    
-    <!-- BAN-BOT-18 (Moderación Global) -->
     <script src="ban-bot-18.js"></script>
-
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
         body { background-color: #202124; color: #bdc1c6; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
@@ -123,7 +120,6 @@
         <aside class="knowledge-column" id="knowledge-panel"></aside>
     </div>
 
-    <!-- GAME OVERLAY -->
     <div id="amogus-game-overlay">
         <div class="game-header" id="game-title">¡ERES EL IMPOSTOR!</div>
         <canvas id="amogus-canvas" width="600" height="400"></canvas>
@@ -138,7 +134,6 @@
         const kgPanel = document.getElementById('knowledge-panel');
         let currentMode = 'todo';
 
-        // Lista negra de memes / Easter Eggs
         const memeTriggers = ['amogus', 'sus', 'impostor', 'among us', 'amongus', 'red', 'vent'];
 
         if (query) {
@@ -154,6 +149,39 @@
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.getElementById(`tab-${mode}`).classList.add('active');
             if (query) executeSearch(query);
+        }
+
+        // ==========================================
+        // NUEVA FUNCIÓN: BUSCAR EN LA DB LOCAL
+        // ==========================================
+        async function buscarEnDB(q) {
+            try {
+                const response = await fetch('urls-db.json');
+                const db = await response.json();
+                const lowerQ = q.toLowerCase();
+                
+                // Filtrar resultados que coincidan con la búsqueda
+                const resultados = db.filter(item => 
+                    item.title.toLowerCase().includes(lowerQ) || 
+                    item.description.toLowerCase().includes(lowerQ) ||
+                    item.url.toLowerCase().includes(lowerQ)
+                );
+
+                if (resultados.length > 0) {
+                    let html = `<div class="status-text">Resultados de la comunidad para "${q}"</div>`;
+                    resultados.forEach(item => {
+                        html += `
+                            <div class="result-item">
+                                <div class="result-site">🌐 ${item.url}</div>
+                                <a href="${item.url}" class="result-title" target="_blank">${item.title}</a>
+                                <div class="result-snippet">${item.description}</div>
+                            </div>
+                        `;
+                    });
+                    return html;
+                }
+                return null;
+            } catch(e) { return null; }
         }
 
         async function executeSearch(q) {
@@ -185,7 +213,14 @@
                 return;
             }
 
-            // --- BÚSQUEDA EN WIKIPEDIA ---
+            // --- BÚSQUEDA EN LA DB LOCAL (NUEVA) ---
+            const dbResults = await buscarEnDB(q);
+            if (dbResults) {
+                container.innerHTML = dbResults;
+                return;
+            }
+
+            // --- BÚSQUEDA EN WIKIPEDIA (FALLBACK) ---
             try {
                 const wikiUrl = `https://es.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(q)}&gsrlimit=10&prop=extracts|pageimages&exintro&explaintext&pithumbsize=200&format=json&origin=*`;
                 const response = await fetch(wikiUrl);
@@ -267,7 +302,6 @@
         function renderAmogusEasterEgg(q) {
             statusEl.innerText = `Resultado altamente sospechoso para "${q}"`;
             kgPanel.style.display = 'none';
-            
             container.innerHTML = `
                 <div class="amogus-card">
                     <div class="amogus-title">¡AMOGUS DETECTADO!</div>
@@ -277,99 +311,33 @@
                 </div>
             `;
         }
-
-        function startAmogusGame() {
-            document.getElementById('amogus-game-overlay').style.display = 'flex';
-            initAmogusGame();
-        }
-
-        function closeGame() {
-            document.getElementById('amogus-game-overlay').style.display = 'none';
-            if (gameLoop) cancelAnimationFrame(gameLoop);
-        }
-
-        // --- MINIJUEGO AMOGUS (Space Shooter Simple) ---
-        let canvas, ctx, gameLoop;
-        let player, bullets, enemies, score, gameOver;
-
+        function startAmogusGame() { document.getElementById('amogus-game-overlay').style.display = 'flex'; initAmogusGame(); }
+        function closeGame() { document.getElementById('amogus-game-overlay').style.display = 'none'; if (gameLoop) cancelAnimationFrame(gameLoop); }
+        let canvas, ctx, gameLoop, player, bullets, enemies, score, gameOver;
         function initAmogusGame() {
-            canvas = document.getElementById('amogus-canvas');
-            ctx = canvas.getContext('2d');
-            player = { x: 300, y: 350, w: 30, h: 40, speed: 5 };
-            bullets = [];
-            enemies = [];
-            score = 0;
-            gameOver = false;
+            canvas = document.getElementById('amogus-canvas'); ctx = canvas.getContext('2d');
+            player = { x: 300, y: 350, w: 30, h: 40, speed: 5 }; bullets = []; enemies = []; score = 0; gameOver = false;
             document.getElementById('game-title').innerText = "¡ERES EL IMPOSTOR! Dispara a los tripulantes 🚀";
-            
-            // Controles
             document.onkeydown = (e) => {
                 if (e.key === 'ArrowLeft' && player.x > 0) player.x -= player.speed * 2;
                 if (e.key === 'ArrowRight' && player.x < canvas.width - player.w) player.x += player.speed * 2;
-                if (e.key === ' ' && !gameOver) {
-                    bullets.push({ x: player.x + player.w/2, y: player.y, speed: 7 });
-                }
+                if (e.key === ' ' && !gameOver) bullets.push({ x: player.x + player.w/2, y: player.y, speed: 7 });
             };
-
-            // Spawner de enemigos
-            setInterval(() => {
-                if (!gameOver) {
-                    enemies.push({ x: Math.random() * (canvas.width - 30), y: -30, w: 25, h: 25, speed: 2 + Math.random() * 2 });
-                }
-            }, 800);
-
-            if (gameLoop) cancelAnimationFrame(gameLoop);
-            gameLoop = requestAnimationFrame(updateGame);
+            setInterval(() => { if (!gameOver) enemies.push({ x: Math.random() * (canvas.width - 30), y: -30, w: 25, h: 25, speed: 2 + Math.random() * 2 }); }, 800);
+            if (gameLoop) cancelAnimationFrame(gameLoop); gameLoop = requestAnimationFrame(updateGame);
         }
-
         function updateGame() {
-            if (gameOver) return;
-            ctx.fillStyle = '#111';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Dibujar jugador (Rojo)
-            ctx.fillStyle = '#FF0000';
-            ctx.fillRect(player.x, player.y, player.w, player.h);
-            ctx.fillStyle = '#fff';
-            ctx.fillRect(player.x + 5, player.y + 10, 5, 10); // Visor
-
-            // Balas
-            ctx.fillStyle = '#00FF00';
-            bullets.forEach((b, i) => {
-                b.y -= b.speed;
-                ctx.fillRect(b.x, b.y, 4, 10);
-                if (b.y < 0) bullets.splice(i, 1);
+            if (gameOver) return; ctx.fillStyle = '#111'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#FF0000'; ctx.fillRect(player.x, player.y, player.w, player.h);
+            ctx.fillStyle = '#fff'; ctx.fillRect(player.x + 5, player.y + 10, 5, 10);
+            ctx.fillStyle = '#00FF00'; bullets.forEach((b, i) => { b.y -= b.speed; ctx.fillRect(b.x, b.y, 4, 10); if (b.y < 0) bullets.splice(i, 1); });
+            ctx.fillStyle = '#00FFFF'; enemies.forEach((e, i) => {
+                e.y += e.speed; ctx.fillRect(e.x, e.y, e.w, e.h);
+                if (e.y + e.h > player.y && e.x < player.x + player.w && e.x + e.w > player.x) { gameOver = true; document.getElementById('game-title').innerText = "¡FUISTE EXPULSADO! (Game Over)"; }
+                bullets.forEach((b, bi) => { if (b.y < e.y + e.h && b.y > e.y && b.x > e.x && b.x < e.x + e.w) { enemies.splice(i, 1); bullets.splice(bi, 1); score++; if (score >= 15) { gameOver = true; document.getElementById('game-title').innerText = "¡VICTORIA! Los tripulantes fueron eliminados."; } } });
             });
-
-            // Enemigos
-            ctx.fillStyle = '#00FFFF';
-            enemies.forEach((e, i) => {
-                e.y += e.speed;
-                ctx.fillRect(e.x, e.y, e.w, e.h);
-
-                // Colisión jugador
-                if (e.y + e.h > player.y && e.x < player.x + player.w && e.x + e.w > player.x) {
-                    gameOver = true;
-                    document.getElementById('game-title').innerText = "¡FUISTE EXPULSADO! (Game Over)";
-                }
-
-                // Colisión bala
-                bullets.forEach((b, bi) => {
-                    if (b.y < e.y + e.h && b.y > e.y && b.x > e.x && b.x < e.x + e.w) {
-                        enemies.splice(i, 1);
-                        bullets.splice(bi, 1);
-                        score++;
-                        if (score >= 15) {
-                            gameOver = true;
-                            document.getElementById('game-title').innerText = "¡VICTORIA! Los tripulantes fueron eliminados.";
-                        }
-                    }
-                });
-            });
-
             if (!gameOver) gameLoop = requestAnimationFrame(updateGame);
         }
-
         function generateKnowledgeGraph(page) {
             kgPanel.style.display = 'block';
             kgPanel.innerHTML = `
@@ -393,7 +361,6 @@
                 </div>
             `;
         }
-
         function showNoResults(q) {
             statusEl.innerText = `Resultados directos para "${q}"`;
             container.innerHTML = `
