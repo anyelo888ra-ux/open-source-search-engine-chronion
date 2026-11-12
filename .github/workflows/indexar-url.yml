@@ -1,0 +1,33 @@
+name: Indexar Nueva URL
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'url-register/template.json' # Solo se activa si el template cambia
+
+jobs:
+  indexar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Ejecutar Bot de Indexación
+        run: node url-register-index-now.js
+
+      - name: Hacer Commit de la Base de Datos actualizada
+        run: |
+          git config --global user.name 'Chronioñ Bot'
+          git config --global user.email 'bot@chronion.search'
+          git add urls-db.json url-register/template.json
+          git commit -m "🤖 Nueva URL indexada automáticamente" || exit 0
+          git push
