@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /url-register-index-now.js
+Disallow: /urls-db.json
+Disallow: /url-register/
+
+# Sitemaps
+Sitemap: https://chronion-search.duckdns.org/sitemap.xml
