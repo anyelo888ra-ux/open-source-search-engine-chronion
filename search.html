@@ -106,6 +106,8 @@
         }
 
         .tab {
+            display: inline-block;
+            text-decoration: none;
             background: transparent;
             border: 0;
             color: var(--muted);
@@ -634,6 +636,7 @@
     <button class="tab" id="tab-img" type="button" data-mode="img">Imágenes</button>
     <button class="tab" id="tab-videos" type="button" data-mode="videos">Vídeos</button>
     <button class="tab" id="tab-noticias" type="button" data-mode="noticias">Noticias</button>
+    <a class="tab maps-tab" id="tab-maps" href="map.html" title="Abrir Chronioñ Maps">🗺️ Maps</a>
 </nav>
 
 <div class="main-layout">
@@ -771,7 +774,7 @@ document.title = query
     ? `${query} - Chronioñ Search`
     : 'Búsqueda en Chronioñ';
 
-document.querySelectorAll('.tab').forEach(tab => {
+document.querySelectorAll('.tab[data-mode]').forEach(tab => {
     tab.classList.toggle(
         'active',
         tab.dataset.mode === currentMode
@@ -780,6 +783,18 @@ document.querySelectorAll('.tab').forEach(tab => {
     tab.addEventListener('click', () => {
         switchTab(tab.dataset.mode);
     });
+});
+
+// Maps es una página independiente: pasa la búsqueda actual sin
+// convertirla en un modo del motor de resultados.
+const mapsTab = document.getElementById('tab-maps');
+mapsTab.addEventListener('click', event => {
+    const mapsQuery = input.value.trim();
+    if (mapsQuery) {
+        mapsTab.href = 'map.html?q=' + encodeURIComponent(mapsQuery);
+    } else {
+        mapsTab.href = 'map.html';
+    }
 });
 
 if (query.trim()) {
