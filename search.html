@@ -1,150 +1,724 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#202124">
+    <meta name="description" content="Busca en Chronioñ: sitios registrados, Wikipedia y más.">
     <title>Búsqueda en Chronioñ</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <script src="ban-bot-18.js"></script>
+
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
-        body { background-color: #202124; color: #bdc1c6; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
-        
-        /* Header */
-        header { display: flex; align-items: center; padding: 16px 24px; border-bottom: 1px solid #3c4043; gap: 24px; }
-        .logo-link { height: 30px; display: flex; align-items: center; text-decoration: none; }
-        .logo-link img { height: 100%; width: auto; }
-        .search-box { flex: 1; max-width: 690px; }
-        .search-box form { display: flex; }
-        input[type="text"] {
-            width: 100%; padding: 10px 18px; font-size: 15px; border-radius: 24px;
-            border: 1px solid #5f6368; background-color: #303134; color: #e8eaed; outline: none;
+        :root {
+            color-scheme: dark;
+            --bg: #202124;
+            --surface: #303134;
+            --surface2: #1e1f20;
+            --border: #3c4043;
+            --text: #e8eaed;
+            --muted: #9aa0a6;
+            --blue: #8ab4f8;
         }
-        input[type="text"]:focus { border-color: #8ab4f8; }
 
-        /* Tabs */
-        .nav-tabs { display: flex; gap: 20px; padding: 12px 160px; border-bottom: 1px solid #3c4043; font-size: 14px; }
-        .tab { color: #9aa0a6; text-decoration: none; padding-bottom: 8px; border-bottom: 3px solid transparent; cursor: pointer; }
-        .tab.active { color: #8ab4f8; border-color: #8ab4f8; font-weight: 500; }
-        .tab.ai-tab { color: #c2e7ff; background: linear-gradient(90deg, #a8c7fa, #d3e3fd); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: bold; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
 
-        /* Layout */
-        .main-layout { display: flex; max-width: 1100px; margin-left: 160px; padding: 20px 0; flex: 1; gap: 40px; }
-        .results-column { flex: 1; max-width: 680px; }
-        .knowledge-column { width: 350px; display: none; }
-        
-        .status-text { font-size: 14px; color: #9aa0a6; margin-bottom: 20px; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
 
-        /* Tarjeta Modo IA */
+        button, input {
+            font: inherit;
+        }
+
+        button:focus-visible,
+        a:focus-visible,
+        input:focus-visible {
+            outline: 2px solid var(--blue);
+            outline-offset: 3px;
+        }
+
+        /* HEADER */
+
+        header {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo-link {
+            height: 30px;
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .logo-link img {
+            height: 100%;
+            width: auto;
+        }
+
+        .search-box {
+            width: 100%;
+            max-width: 690px;
+        }
+
+        .search-box form {
+            display: flex;
+            width: 100%;
+        }
+
+        #searchInput {
+            width: 100%;
+            padding: 11px 18px;
+            font-size: 15px;
+            border-radius: 24px;
+            border: 1px solid #5f6368;
+            background: var(--surface);
+            color: var(--text);
+            outline: none;
+        }
+
+        #searchInput:focus {
+            border-color: var(--blue);
+        }
+
+        /* TABS */
+
+        .nav-tabs {
+            display: flex;
+            gap: 22px;
+            padding: 12px 160px;
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        .tab {
+            background: transparent;
+            border: 0;
+            color: var(--muted);
+            padding: 5px 0 9px;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .tab:hover {
+            color: var(--text);
+        }
+
+        .tab.active {
+            color: var(--blue);
+            border-color: var(--blue);
+            font-weight: 600;
+        }
+
+        .tab.ai-tab {
+            color: #c2e7ff;
+            font-weight: bold;
+        }
+
+        .tab.ai-tab.active {
+            border-color: #c2e7ff;
+        }
+
+        /* MAIN */
+
+        .main-layout {
+            display: flex;
+            align-items: flex-start;
+            gap: 40px;
+            max-width: 1100px;
+            margin-left: 160px;
+            padding: 22px 20px 50px 0;
+        }
+
+        .results-column {
+            flex: 1;
+            min-width: 0;
+            max-width: 680px;
+        }
+
+        .knowledge-column {
+            width: 350px;
+            flex-shrink: 0;
+            display: none;
+        }
+
+        .status-text {
+            color: var(--muted);
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+
+        section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 17px;
+            color: var(--blue);
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        /* RESULTADOS */
+
+        .result-item {
+            margin-bottom: 27px;
+            overflow-wrap: anywhere;
+        }
+
+        .result-site {
+            color: #bdc1c6;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .result-title {
+            display: inline-block;
+            color: var(--blue);
+            font-size: 20px;
+            text-decoration: none;
+            margin-bottom: 6px;
+        }
+
+        .result-title:hover {
+            text-decoration: underline;
+        }
+
+        .result-snippet {
+            color: #bdc1c6;
+            font-size: 14px;
+            line-height: 1.55;
+        }
+
+        .result-img {
+            width: 95px;
+            max-height: 95px;
+            object-fit: cover;
+            border-radius: 8px;
+            float: left;
+            margin: 0 13px 7px 0;
+        }
+
+        .result-meta {
+            color: var(--muted);
+            font-size: 12px;
+            margin-top: 7px;
+        }
+
+        /* IA */
+
         .ai-overview-card {
-            background: #1e1f20; border: 1px solid #3c4043; border-radius: 12px; padding: 16px 20px;
-            margin-bottom: 24px; border-left: 4px solid #8ab4f8;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--blue);
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 25px;
         }
-        .ai-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-weight: 600; color: #8ab4f8; font-size: 15px; }
-        .ai-content { font-size: 15px; color: #e8eaed; line-height: 1.6; }
 
-        /* Resultados */
-        .result-item { margin-bottom: 28px; }
-        .result-site { font-size: 12px; color: #bdc1c6; margin-bottom: 4px; word-break: break-all; }
-        .result-title { font-size: 20px; color: #8ab4f8; text-decoration: none; display: inline-block; margin-bottom: 6px; }
-        .result-title:hover { text-decoration: underline; }
-        .result-snippet { font-size: 14px; color: #bdc1c6; line-height: 1.5; }
-        .result-img { max-width: 100px; border-radius: 8px; float: left; margin-right: 15px; margin-bottom: 5px; }
+        .ai-header {
+            color: var(--blue);
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        .ai-content {
+            color: var(--text);
+            font-size: 15px;
+            line-height: 1.7;
+        }
+
+        .ai-disclaimer {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 12px;
+        }
 
         /* PANEL DE CONOCIMIENTO */
-        .knowledge-panel { background: #1e1f20; border: 1px solid #3c4043; border-radius: 12px; overflow: hidden; }
-        .kg-header { padding: 20px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid #3c4043; }
-        .kg-title { font-size: 24px; font-weight: 500; color: #fff; }
-        .kg-desc { font-size: 14px; line-height: 1.5; color: #e8eaed; }
-        .kg-details { padding: 15px 20px; }
-        .kg-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #303134; font-size: 14px; }
-        .kg-related { padding: 20px; border-top: 1px solid #3c4043; }
-        .kg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .kg-card { background: #303134; border-radius: 8px; padding: 10px; text-align: center; text-decoration: none; color: #e8eaed; }
-        .kg-card img { width: 60px; height: 60px; border-radius: 8px; object-fit: contain; margin-bottom: 8px; }
 
-        /* AMONG US EASTER EGG */
+        .knowledge-panel {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .kg-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .kg-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 13px;
+        }
+
+        .kg-image {
+            width: 65px;
+            height: 65px;
+            object-fit: cover;
+            border-radius: 9px;
+        }
+
+        .kg-title {
+            font-size: 22px;
+            color: white;
+            font-weight: 600;
+        }
+
+        .kg-desc {
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--text);
+        }
+
+        .kg-related {
+            padding: 20px;
+        }
+
+        .kg-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .kg-card {
+            background: var(--surface);
+            border-radius: 9px;
+            padding: 12px 7px;
+            text-align: center;
+            text-decoration: none;
+            color: var(--text);
+            font-size: 13px;
+            transition: .2s;
+        }
+
+        .kg-card:hover {
+            background: #45474b;
+            transform: translateY(-2px);
+        }
+
+        .kg-card img {
+            display: block;
+            width: 48px;
+            height: 48px;
+            object-fit: contain;
+            margin: 0 auto 8px;
+        }
+
+        /* IMÁGENES */
+
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+            gap: 12px;
+        }
+
+        .image-result {
+            display: block;
+            background: var(--surface);
+            padding: 8px;
+            border-radius: 9px;
+            text-decoration: none;
+            color: var(--text);
+            font-size: 13px;
+            transition: .2s;
+        }
+
+        .image-result:hover {
+            background: #45474b;
+        }
+
+        .image-result img {
+            width: 100%;
+            height: 125px;
+            object-fit: cover;
+            border-radius: 6px;
+            margin-bottom: 7px;
+        }
+
+        /* MENSAJES Y EASTER EGGS */
+
+        .special-card {
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            border-radius: 14px;
+            padding: 28px;
+            margin: 12px 0 25px;
+            text-align: center;
+        }
+
+        .special-card h2 {
+            font-size: 27px;
+            margin-bottom: 12px;
+        }
+
+        .special-card p {
+            color: var(--text);
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .special-icon {
+            font-size: 55px;
+            margin-bottom: 13px;
+        }
+
+        .special-button {
+            border: 0;
+            background: var(--blue);
+            color: #172033;
+            padding: 11px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 18px;
+            transition: .2s;
+        }
+
+        .special-button:hover {
+            filter: brightness(1.12);
+            transform: translateY(-2px);
+        }
+
         .amogus-card {
-            background: linear-gradient(135deg, #C51111, #7A0000);
-            border: 2px solid #FF0000;
-            border-radius: 12px; padding: 30px; text-align: center; color: white;
-            box-shadow: 0 0 30px rgba(255,0,0,0.4); margin-bottom: 20px;
+            background: linear-gradient(135deg, #c51111, #650000);
+            border: 2px solid #ff3333;
+            border-radius: 14px;
+            padding: 30px;
+            text-align: center;
+            color: white;
+            box-shadow: 0 0 25px rgba(255, 0, 0, .2);
+            margin-bottom: 25px;
         }
-        .amogus-title { font-size: 32px; font-weight: 900; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
-        .amogus-btn {
-            background: #FF0000; color: white; border: 2px solid white; padding: 12px 24px;
-            font-size: 18px; font-weight: bold; border-radius: 30px; cursor: pointer;
-            margin-top: 20px; transition: 0.2s; box-shadow: 0 4px 0 #500000;
-        }
-        .amogus-btn:hover { background: #FF3333; transform: translateY(-2px); box-shadow: 0 6px 0 #500000; }
-        .amogus-btn:active { transform: translateY(2px); box-shadow: 0 0 0 #500000; }
 
-        /* GAME OVERLAY */
-        #amogus-game-overlay {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0,0,0,0.95); z-index: 9999; display: none; flex-direction: column;
-            justify-content: center; align-items: center;
+        .amogus-title {
+            font-size: 30px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            margin-bottom: 12px;
         }
-        #amogus-canvas { background: #111; border: 2px solid #FF0000; border-radius: 12px; }
-        .game-header { color: #FF0000; font-size: 24px; font-weight: bold; margin-bottom: 15px; font-family: monospace; }
-        .game-btn { margin-top: 15px; background: #FF0000; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+
+        .amogus-btn {
+            background: #ff2222;
+            color: white;
+            border: 2px solid white;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .amogus-btn:hover {
+            background: #ff5555;
+        }
+
+        .matrix-card {
+            background: #001500;
+            border: 1px solid #00aa33;
+            color: #00ff55;
+            font-family: monospace;
+            text-shadow: 0 0 8px #00ff55;
+        }
+
+        .matrix-card h2,
+        .matrix-card p {
+            color: #00ff55;
+            font-family: monospace;
+        }
+
+        .nexus-card {
+            background: linear-gradient(135deg, #101b35, #153d58);
+            border: 1px solid #28b9e8;
+        }
+
+        .nexus-card h2 {
+            color: #75dfff;
+        }
+
+        .chronion-card {
+            background: linear-gradient(135deg, #27213d, #303d65);
+            border: 1px solid #a5b8ff;
+        }
+
+        /* MINIJUEGO */
+
+        #amogus-game-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .96);
+            z-index: 9999;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+        }
+
+        .game-header {
+            color: #ff4444;
+            font-family: monospace;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        #amogus-canvas {
+            width: min(600px, 94vw);
+            height: auto;
+            background: #111;
+            border: 2px solid #ff3333;
+            border-radius: 12px;
+        }
+
+        .game-controls {
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .game-btn {
+            background: #b91c1c;
+            color: white;
+            border: 0;
+            padding: 11px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .game-btn:hover {
+            background: #e22;
+        }
+
+        .game-help {
+            color: #aaa;
+            font-size: 12px;
+            margin-top: 12px;
+            text-align: center;
+        }
+
+        /* BARREL ROLL */
+
+        .barrel-roll {
+            animation: barrelRoll .75s ease-in-out;
+        }
+
+        @keyframes barrelRoll {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        footer {
+            padding: 22px;
+            color: var(--muted);
+            font-size: 12px;
+            text-align: center;
+            border-top: 1px solid var(--border);
+        }
+
+        footer a {
+            color: var(--blue);
+            text-decoration: none;
+        }
+
+        /* MÓVIL */
 
         @media (max-width: 900px) {
-            .main-layout { flex-direction: column; margin-left: 20px; }
-            .nav-tabs { padding: 12px 20px; }
+            .nav-tabs {
+                padding: 12px 20px;
+                gap: 19px;
+            }
+
+            .main-layout {
+                flex-direction: column;
+                margin: 0;
+                padding: 20px;
+            }
+
+            .results-column {
+                width: 100%;
+                max-width: none;
+            }
+
+            .knowledge-column {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 550px) {
+            header {
+                padding: 13px;
+                gap: 12px;
+            }
+
+            .logo-link {
+                height: 24px;
+            }
+
+            #searchInput {
+                font-size: 14px;
+                padding: 10px 13px;
+            }
+
+            .result-title {
+                font-size: 18px;
+            }
+
+            .special-card {
+                padding: 22px 14px;
+            }
+
+            .amogus-title {
+                font-size: 23px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                scroll-behavior: auto !important;
+                animation-duration: .01ms !important;
+                transition-duration: .01ms !important;
+            }
         }
     </style>
 </head>
+
 <body>
-    <header>
-        <a href="index.html" class="logo-link"><img src="logo.svg" alt="Chronioñ Logo"></a>
-        <div class="search-box">
-            <form action="search.html" method="GET">
-                <input type="text" id="searchInput" name="q" required autocomplete="off">
-            </form>
+
+<header>
+    <a href="index.html" class="logo-link">
+        <img src="logo.svg" alt="Chronioñ Logo">
+    </a>
+
+    <div class="search-box">
+        <form action="search.html" method="GET" id="searchForm">
+            <input
+                type="text"
+                id="searchInput"
+                name="q"
+                placeholder="Buscar en Chronioñ..."
+                required
+                autocomplete="off"
+                aria-label="Buscar"
+            >
+            <input type="hidden" name="mode" id="modeInput" value="todo">
+        </form>
+    </div>
+</header>
+
+<nav class="nav-tabs" aria-label="Categorías de búsqueda">
+    <button class="tab active" id="tab-todo" type="button" data-mode="todo">Todo</button>
+    <button class="tab ai-tab" id="tab-ia" type="button" data-mode="ia">✨ Modo IA</button>
+    <button class="tab" id="tab-img" type="button" data-mode="img">Imágenes</button>
+    <button class="tab" id="tab-videos" type="button" data-mode="videos">Vídeos</button>
+    <button class="tab" id="tab-noticias" type="button" data-mode="noticias">Noticias</button>
+</nav>
+
+<div class="main-layout">
+
+    <main class="results-column">
+
+        <!-- IMPORTANTE: el estado está fuera del contenedor de resultados -->
+        <div class="status-text" id="status" aria-live="polite">
+            Cargando...
         </div>
-    </header>
 
-    <div class="nav-tabs">
-        <a class="tab active" id="tab-todo" onclick="switchTab('todo')">Todo</a>
-        <a class="tab ai-tab" id="tab-ia" onclick="switchTab('ia')">✨ Modo IA</a>
-        <a class="tab" id="tab-img" onclick="switchTab('img')">Imágenes</a>
-        <a class="tab" id="tab-videos" onclick="switchTab('videos')">Vídeos</a>
-        <a class="tab" id="tab-noticias" onclick="switchTab('noticias')">Noticias</a>
+        <div id="results"></div>
+
+    </main>
+
+    <aside class="knowledge-column" id="knowledge-panel"></aside>
+
+</div>
+
+<footer>
+    <p>Chronioñ Search · Motor de búsqueda open-source</p>
+    <p style="margin-top:7px;">
+        <a href="index.html">Inicio</a> ·
+        <a href="Privacy.html">Privacidad</a> ·
+        <a href="Conditions.html">Condiciones</a>
+    </p>
+    <p style="margin-top:7px;">Hecho para una web más libre. 🚀</p>
+</footer>
+
+<!-- MINIJUEGO AMOGUS -->
+
+<div id="amogus-game-overlay" role="dialog" aria-modal="true" aria-label="Minijuego AMOGUS">
+
+    <div class="game-header" id="game-title">
+        ¡ESQUIVA LOS ASTEROIDES!
     </div>
 
-    <div class="main-layout">
-        <main class="results-column" id="results">
-            <div class="status-text" id="status">Cargando...</div>
-        </main>
-        <aside class="knowledge-column" id="knowledge-panel"></aside>
+    <canvas id="amogus-canvas" width="600" height="400"></canvas>
+
+    <div class="game-controls">
+        <button class="game-btn" id="game-left">◀ Izquierda</button>
+        <button class="game-btn" id="game-right">Derecha ▶</button>
     </div>
 
-    <div id="amogus-game-overlay">
-        <div class="game-header" id="game-title">¡ERES EL IMPOSTOR!</div>
-        <canvas id="amogus-canvas" width="600" height="400"></canvas>
-        <button class="game-btn" onclick="closeGame()">Salir del juego</button>
+    <div class="game-controls">
+        <button class="game-btn" id="game-restart">Reiniciar</button>
+        <button class="game-btn" id="game-close">Salir</button>
     </div>
 
-    <script>
+    <p class="game-help">
+        Usa las flechas o A/D para moverte. Recoge estrellas y esquiva los asteroides.
+    </p>
 
-const urlParams = new URLSearchParams(window.location.search);
-const query = urlParams.get('q') || '';
+</div>
 
-const container = document.getElementById('results');
+<script>
+'use strict';
+
+/* =========================================
+   CONFIGURACIÓN
+========================================= */
+
+const params = new URLSearchParams(location.search);
+
+const query = params.get('q') || '';
+const initialMode = params.get('mode') || 'todo';
+
+const validModes = ['todo', 'ia', 'img', 'videos', 'noticias'];
+
+let currentMode = validModes.includes(initialMode)
+    ? initialMode
+    : 'todo';
+
+const input = document.getElementById('searchInput');
+const modeInput = document.getElementById('modeInput');
 const statusEl = document.getElementById('status');
+const resultsEl = document.getElementById('results');
 const kgPanel = document.getElementById('knowledge-panel');
 
-let currentMode = 'todo';
-let gameLoop = null;
-let enemyTimer = null;
-let keyHandler = null;
+let searchRequestId = 0;
 
-const memeTriggers = [
-    'amogus', 'sus', 'impostor', 'among us', 'amongus', 'vent'
-];
+/* =========================================
+   UTILIDADES
+========================================= */
 
-// Escapar texto procedente de Wikipedia o de la base de URLs.
 function escapeHTML(value) {
     return String(value ?? '').replace(/[&<>"']/g, char => ({
         '&': '&amp;',
@@ -155,311 +729,836 @@ function escapeHTML(value) {
     })[char]);
 }
 
-// Solo permitir enlaces HTTP y HTTPS.
 function safeURL(value) {
     try {
         const url = new URL(value);
-        return ['https:', 'http:'].includes(url.protocol)
-            ? url.href
-            : null;
+
+        if (!['https:', 'http:'].includes(url.protocol)) {
+            return null;
+        }
+
+        return url.href;
     } catch {
         return null;
     }
 }
 
-if (query) {
-    document.getElementById('searchInput').value = query;
-    document.title = `${query} - Búsqueda en Chronioñ`;
+function normalizeText(value) {
+    return String(value ?? '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+}
+
+function setStatus(message) {
+    statusEl.textContent = message;
+}
+
+function clearKnowledgePanel() {
+    kgPanel.style.display = 'none';
+    kgPanel.innerHTML = '';
+}
+
+/* =========================================
+   INICIALIZACIÓN
+========================================= */
+
+input.value = query;
+modeInput.value = currentMode;
+
+document.title = query
+    ? `${query} - Chronioñ Search`
+    : 'Búsqueda en Chronioñ';
+
+document.querySelectorAll('.tab').forEach(tab => {
+    tab.classList.toggle(
+        'active',
+        tab.dataset.mode === currentMode
+    );
+
+    tab.addEventListener('click', () => {
+        switchTab(tab.dataset.mode);
+    });
+});
+
+if (query.trim()) {
     executeSearch(query);
 } else {
-    statusEl.innerText = 'Escribe algo en la barra para buscar.';
+    setStatus('Escribe algo en la barra para buscar.');
 }
+
+/* =========================================
+   CAMBIAR DE PESTAÑA
+========================================= */
 
 function switchTab(mode) {
+    if (!validModes.includes(mode)) return;
+
     currentMode = mode;
+    modeInput.value = mode;
 
     document.querySelectorAll('.tab').forEach(tab => {
-        tab.classList.remove('active');
+        tab.classList.toggle(
+            'active',
+            tab.dataset.mode === mode
+        );
     });
 
-    document.getElementById(`tab-${mode}`).classList.add('active');
+    const url = new URL(location.href);
 
-    if (query) executeSearch(query);
+    url.searchParams.set('mode', mode);
+
+    if (query) {
+        url.searchParams.set('q', query);
+    }
+
+    history.replaceState({}, '', url);
+
+    if (query.trim()) {
+        executeSearch(query);
+    } else {
+        setStatus('Escribe algo para buscar.');
+        resultsEl.innerHTML = '';
+        clearKnowledgePanel();
+    }
 }
 
-// ==========================================
-// BUSCAR EN LA BASE DE DATOS DE CHRONIOÑ
-// ==========================================
+/* =========================================
+   BÚSQUEDA EN LA BASE DE DATOS
+========================================= */
 
 async function buscarEnDB(q) {
     try {
         const response = await fetch('urls-db.json', {
-            cache: 'no-cache'
+            cache: 'no-store'
         });
 
-        if (!response.ok) throw new Error('No se pudo cargar urls-db.json');
+        if (!response.ok) {
+            throw new Error('No se pudo cargar urls-db.json');
+        }
 
         const db = await response.json();
+
         if (!Array.isArray(db)) return [];
 
-        const terms = q.toLowerCase().trim().split(/\s+/);
+        const normalizedQuery = normalizeText(q);
+        const terms = normalizedQuery.split(/\s+/).filter(Boolean);
 
         return db.map(item => {
-            if (!item || !item.url || !item.title) return null;
+            if (!item || !item.url || !item.title) {
+                return null;
+            }
 
             const title = String(item.title);
             const description = String(item.description || '');
             const url = String(item.url);
+            const category = String(item.category || '');
 
-            const searchable = `${title} ${description} ${url}`.toLowerCase();
+            const normalizedTitle = normalizeText(title);
+            const normalizedURL = normalizeText(url);
+            const normalizedDescription = normalizeText(description);
+            const normalizedCategory = normalizeText(category);
 
             let score = 0;
 
-            // Coincidencias por palabras.
             for (const term of terms) {
-                if (title.toLowerCase().includes(term)) score += 5;
-                if (url.toLowerCase().includes(term)) score += 4;
-                if (description.toLowerCase().includes(term)) score += 1;
+                if (normalizedTitle.includes(term)) score += 8;
+                if (normalizedURL.includes(term)) score += 5;
+                if (normalizedDescription.includes(term)) score += 2;
+                if (normalizedCategory.includes(term)) score += 1;
             }
 
-            // Priorizar coincidencias exactas.
-            if (title.toLowerCase() === q.toLowerCase()) score += 15;
-            if (url.toLowerCase() === q.toLowerCase()) score += 15;
+            if (normalizedTitle === normalizedQuery) score += 30;
+            if (normalizedURL === normalizedQuery) score += 20;
+
+            if (normalizedTitle.startsWith(normalizedQuery)) {
+                score += 8;
+            }
 
             return score > 0
                 ? { ...item, score }
                 : null;
         })
         .filter(Boolean)
-        .sort((a, b) => b.score - a.score);
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 20);
 
     } catch (error) {
-        console.warn('Error en Chronioñ DB:', error);
+        console.warn('Chronioñ DB:', error);
         return [];
     }
 }
 
-// ==========================================
-// BUSCAR EN WIKIPEDIA
-// ==========================================
+/* =========================================
+   BÚSQUEDA EN WIKIPEDIA
+========================================= */
 
 async function buscarEnWikipedia(q) {
-    const wikiUrl =
-        `https://es.wikipedia.org/w/api.php?action=query` +
-        `&generator=search&gsrsearch=${encodeURIComponent(q)}` +
-        `&gsrlimit=10&prop=extracts|pageimages` +
-        `&exintro&explaintext&pithumbsize=200` +
-        `&format=json&origin=*`;
+    const wikiURL =
+        'https://es.wikipedia.org/w/api.php?' +
+        'action=query' +
+        '&generator=search' +
+        '&gsrnamespace=0' +
+        '&gsrsearch=' + encodeURIComponent(q) +
+        '&gsrlimit=10' +
+        '&prop=extracts|pageimages' +
+        '&exintro=1' +
+        '&explaintext=1' +
+        '&pithumbsize=250' +
+        '&format=json' +
+        '&origin=*';
 
-    const response = await fetch(wikiUrl);
+    const response = await fetch(wikiURL);
 
-    if (!response.ok) throw new Error('Wikipedia no disponible');
+    if (!response.ok) {
+        throw new Error('Wikipedia no disponible');
+    }
 
     const data = await response.json();
 
-    if (!data.query || !data.query.pages) return [];
+    if (!data.query?.pages) {
+        return [];
+    }
 
     return Object.values(data.query.pages);
 }
 
-// ==========================================
-// GENERAR RESULTADOS DE WEBS REGISTRADAS
-// ==========================================
+/* =========================================
+   RESULTADOS DE SITIOS REGISTRADOS
+========================================= */
 
-function renderDBResults(results) {
-    if (!results.length) return '';
+function renderDBResults(items) {
+    const validItems = items.filter(item => safeURL(item.url));
+
+    if (!validItems.length) return '';
 
     let html = `
         <section>
-            <h2 style="font-size:17px;margin-bottom:18px;color:#8ab4f8;">
+            <h2 class="section-title">
                 🌐 Sitios registrados en Chronioñ
             </h2>
     `;
 
-    results.forEach(item => {
+    for (const item of validItems) {
         const url = safeURL(item.url);
-        if (!url) return;
+        const hostname = new URL(url).hostname;
 
         html += `
-            <div class="result-item">
+            <article class="result-item">
+
                 <div class="result-site">
-                    🌐 ${escapeHTML(new URL(url).hostname)}
+                    🌐 ${escapeHTML(hostname)}
                 </div>
 
-                <a href="${escapeHTML(url)}"
-                   class="result-title"
-                   target="_blank"
-                   rel="noopener noreferrer">
+                <a
+                    href="${escapeHTML(url)}"
+                    class="result-title"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
                     ${escapeHTML(item.title)}
                 </a>
 
-                <div class="result-snippet">
+                <p class="result-snippet">
                     ${escapeHTML(item.description || 'Sin descripción disponible.')}
-                </div>
+                </p>
 
-                <div style="font-size:12px;color:#9aa0a6;margin-top:5px;">
+                <div class="result-meta">
                     ${escapeHTML(item.category || 'General')}
                     · Registrado por ${escapeHTML(item.owner || 'Comunidad')}
                 </div>
-            </div>
+
+            </article>
         `;
-    });
+    }
 
     html += '</section>';
+
     return html;
 }
 
-// ==========================================
-// GENERAR RESULTADOS DE WIKIPEDIA
-// ==========================================
+/* =========================================
+   RESULTADOS DE WIKIPEDIA
+========================================= */
 
 function renderWikiResults(pages) {
     if (!pages.length) {
-        return '<p class="status-text">No se encontraron artículos en Wikipedia.</p>';
+        return `
+            <p class="status-text">
+                No se encontraron artículos en Wikipedia.
+            </p>
+        `;
     }
 
     let html = `
-        <section style="margin-top:25px;">
-            <h2 style="font-size:17px;margin-bottom:18px;color:#8ab4f8;">
+        <section>
+            <h2 class="section-title">
                 📚 Resultados de Wikipedia
             </h2>
     `;
 
-    pages.forEach(page => {
-        const title = escapeHTML(page.title);
-        const wikiLink = `https://es.wikipedia.org/wiki/${encodeURIComponent(page.title)}`;
+    for (const page of pages) {
+        const title = String(page.title || 'Artículo');
+        const wikiLink =
+            'https://es.wikipedia.org/wiki/' +
+            encodeURIComponent(title.replace(/ /g, '_'));
 
-        const extract = page.extract
-            ? page.extract.substring(0, 250) + (page.extract.length > 250 ? '...' : '')
-            : 'Sin descripción disponible.';
+        const extract = String(page.extract || 'Sin descripción disponible.');
 
         const image = page.thumbnail?.source
-            ? `<img src="${escapeHTML(safeURL(page.thumbnail.source) || '')}"
-                    class="result-img" alt="">`
-            : '';
+            ? safeURL(page.thumbnail.source)
+            : null;
 
         html += `
-            <div class="result-item">
+            <article class="result-item">
+
                 <div class="result-site">
-                    🌐 es.wikipedia.org/wiki/${encodeURIComponent(page.title)}
+                    🌐 es.wikipedia.org/wiki/${escapeHTML(encodeURIComponent(title))}
                 </div>
 
-                <a href="${wikiLink}"
-                   class="result-title"
-                   target="_blank"
-                   rel="noopener noreferrer">
-                    ${title}
+                <a
+                    href="${escapeHTML(wikiLink)}"
+                    class="result-title"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    ${escapeHTML(title)}
                 </a>
 
                 <div class="result-snippet">
-                    ${image}${escapeHTML(extract)}
+
+                    ${image ? `
+                        <img
+                            src="${escapeHTML(image)}"
+                            class="result-img"
+                            alt="${escapeHTML(title)}"
+                            loading="lazy"
+                        >
+                    ` : ''}
+
+                    ${escapeHTML(extract.substring(0, 320))}
+                    ${extract.length > 320 ? '...' : ''}
+
                 </div>
-            </div>
+
+            </article>
         `;
-    });
+    }
 
     html += '</section>';
+
     return html;
 }
 
-// ==========================================
-// MOTOR PRINCIPAL DE BÚSQUEDA
-// ==========================================
+/* =========================================
+   PANEL DE CONOCIMIENTO
+========================================= */
+
+function generateKnowledgeGraph(page) {
+    const image = page.thumbnail?.source
+        ? safeURL(page.thumbnail.source)
+        : null;
+
+    const title = String(page.title || 'Información');
+    const description = String(page.extract || '');
+
+    kgPanel.style.display = 'block';
+
+    kgPanel.innerHTML = `
+        <div class="knowledge-panel">
+
+            <div class="kg-header">
+
+                <div class="kg-top">
+
+                    ${image ? `
+                        <img
+                            src="${escapeHTML(image)}"
+                            class="kg-image"
+                            alt=""
+                            loading="lazy"
+                        >
+                    ` : ''}
+
+                    <div>
+                        <div class="kg-title">
+                            ${escapeHTML(title)}
+                        </div>
+
+                        <div style="font-size:12px;color:#9aa0a6;margin-top:5px;">
+                            Entidad / Artículo
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="kg-desc">
+                    ${escapeHTML(description.substring(0, 350))}
+                </div>
+
+            </div>
+
+            <div class="kg-related">
+
+                <div style="font-size:15px;margin-bottom:15px;">
+                    También puedes buscar
+                </div>
+
+                <div class="kg-grid">
+
+                    <a href="search.html?q=ChatGPT" class="kg-card">
+                        <img
+                            src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/ChatGPT_logo.svg/120px-ChatGPT_logo.svg.png"
+                            alt=""
+                            loading="lazy"
+                        >
+                        ChatGPT
+                    </a>
+
+                    <a href="search.html?q=Gemini" class="kg-card">
+                        <img
+                            src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Google_Gemini_logo.svg/120px-Google_Gemini_logo.svg.png"
+                            alt=""
+                            loading="lazy"
+                        >
+                        Gemini
+                    </a>
+
+                    <a href="search.html?q=DeepSeek" class="kg-card">
+                        <img
+                            src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/DeepSeek_logo.svg/120px-DeepSeek_logo.svg.png"
+                            alt=""
+                            loading="lazy"
+                        >
+                        DeepSeek
+                    </a>
+
+                    <a href="search.html?q=Copilot" class="kg-card">
+                        <img
+                            src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Microsoft_Copilot_Icon.svg/120px-Microsoft_Copilot_Icon.svg.png"
+                            alt=""
+                            loading="lazy"
+                        >
+                        Copilot
+                    </a>
+
+                </div>
+            </div>
+
+        </div>
+    `;
+}
+
+/* =========================================
+   EASTER EGGS
+========================================= */
+
+function detectEasterEgg(q) {
+    const normalized = normalizeText(q);
+    const words = normalized.split(/\s+/);
+
+    const amongUsWords = [
+        'amogus',
+        'sus',
+        'impostor',
+        'amongus',
+        'vent'
+    ];
+
+    if (
+        amongUsWords.some(word => words.includes(word)) ||
+        normalized.includes('among us')
+    ) {
+        return 'amogus';
+    }
+
+    if (normalized === 'matrix' || normalized === 'the matrix') {
+        return 'matrix';
+    }
+
+    if (normalized === '42') {
+        return '42';
+    }
+
+    if (
+        normalized === 'nexus' ||
+        normalized === 'nexus ai' ||
+        normalized === 'nexus.ai'
+    ) {
+        return 'nexus';
+    }
+
+    if (
+        normalized === 'chronion' ||
+        normalized === 'chronion search'
+    ) {
+        return 'chronion';
+    }
+
+    if (
+        normalized === 'hola' ||
+        normalized === 'hello' ||
+        normalized === 'buenas'
+    ) {
+        return 'hello';
+    }
+
+    if (
+        normalized === 'do a barrel roll' ||
+        normalized === 'barrel roll'
+    ) {
+        return 'barrel';
+    }
+
+    return null;
+}
+
+function renderEasterEgg(type, q) {
+    clearKnowledgePanel();
+
+    if (type === 'amogus') {
+        setStatus('🚨 ¡Resultado sospechoso detectado!');
+
+        resultsEl.innerHTML = `
+            <div class="amogus-card">
+
+                <div class="amogus-title">
+                    ¡AMOGUS DETECTADO!
+                </div>
+
+                <p style="font-size:17px;">
+                    Parece que has buscado algo muy <strong>sus</strong>.
+                </p>
+
+                <p style="font-size:13px;color:#ffcccc;margin-top:10px;">
+                    La IA de Chronioñ ha detectado actividad de impostores.
+                </p>
+
+                <button class="amogus-btn" id="start-amogus">
+                    🚀 Lanzar Nave (Jugar)
+                </button>
+
+            </div>
+        `;
+
+        document.getElementById('start-amogus')
+            .addEventListener('click', startAmogusGame);
+
+        return true;
+    }
+
+    const eggs = {
+        matrix: {
+            icon: '🟢',
+            title: 'WELCOME TO THE MATRIX',
+            description: 'La realidad es solo una búsqueda más. Sigue el código.',
+            className: 'matrix-card',
+            button: 'Entrar en la Matrix',
+            action: () => {
+                document.body.classList.add('matrix-card');
+                setTimeout(() => {
+                    document.body.classList.remove('matrix-card');
+                }, 2500);
+            }
+        },
+
+        '42': {
+            icon: '🌌',
+            title: 'LA RESPUESTA ES 42',
+            description: 'La respuesta definitiva a la vida, el universo y todo lo demás.',
+            className: '',
+            button: 'Entendido 🫡'
+        },
+
+        nexus: {
+            icon: '🚀',
+            title: 'NEXUS.AI DETECTADO',
+            description: 'Un universo de herramientas, inteligencia artificial y proyectos.',
+            className: 'nexus-card',
+            button: 'Explorar NEXUS',
+            action: () => {
+                window.open(
+                    'https://nexus.ai-nex.duckdns.org/',
+                    '_blank',
+                    'noopener,noreferrer'
+                );
+            }
+        },
+
+        chronion: {
+            icon: '🌐',
+            title: '¡ESTÁS EN CHRONIOÑ!',
+            description: 'Buscando sobre el propio buscador... eso es bastante meta. XD',
+            className: 'chronion-card',
+            button: 'Volver a buscar'
+        },
+
+        hello: {
+            icon: '👋',
+            title: '¡HOLA, INTERNET!',
+            description: 'Chronioñ te desea una excelente búsqueda. ¡Que encuentres lo que buscas!',
+            className: '',
+            button: '¡Gracias!'
+        },
+
+        barrel: {
+            icon: '🌀',
+            title: 'DO A BARREL ROLL!',
+            description: 'Google no tiene el monopolio de los trucos secretos. XD',
+            className: '',
+            button: '¡Girar!',
+            action: () => {
+                if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                    return;
+                }
+
+                resultsEl.classList.remove('barrel-roll');
+
+                // Reiniciar la animación.
+                void resultsEl.offsetWidth;
+
+                resultsEl.classList.add('barrel-roll');
+
+                setTimeout(() => {
+                    resultsEl.classList.remove('barrel-roll');
+                }, 800);
+            }
+        }
+    };
+
+    const egg = eggs[type];
+
+    if (!egg) return false;
+
+    setStatus('✨ Easter egg encontrado');
+
+    resultsEl.innerHTML = `
+        <div class="special-card ${egg.className}">
+
+            <div class="special-icon">${egg.icon}</div>
+
+            <h2>${escapeHTML(egg.title)}</h2>
+
+            <p>${escapeHTML(egg.description)}</p>
+
+            <button class="special-button" id="egg-action">
+                ${escapeHTML(egg.button)}
+            </button>
+
+        </div>
+    `;
+
+    document.getElementById('egg-action')
+        .addEventListener('click', () => {
+            if (egg.action) {
+                egg.action();
+            }
+        });
+
+    return true;
+}
+
+/* =========================================
+   MOTOR PRINCIPAL
+========================================= */
 
 async function executeSearch(q) {
-    const lowerQ = q.toLowerCase().trim();
+    const requestId = ++searchRequestId;
 
-    container.innerHTML = '';
-    statusEl.innerText = `Buscando "${q}"...`;
-    kgPanel.style.display = 'none';
+    const cleanQuery = String(q || '').trim();
 
-    if (!q.trim()) {
-        statusEl.innerText = 'Escribe algo para buscar.';
+    resultsEl.innerHTML = '';
+    clearKnowledgePanel();
+
+    if (!cleanQuery) {
+        setStatus('Escribe algo para buscar.');
         return;
     }
 
-    // Easter egg.
-    if (memeTriggers.some(trigger => lowerQ.includes(trigger))) {
-        renderAmogusEasterEgg(q);
-        return;
+    // Los easter eggs solo se activan en Todo.
+    if (currentMode === 'todo') {
+        const egg = detectEasterEgg(cleanQuery);
+
+        if (egg && renderEasterEgg(egg, cleanQuery)) {
+            return;
+        }
     }
 
-    // Vídeos.
+    // VÍDEOS
     if (currentMode === 'videos') {
-        statusEl.innerText = `Vídeos para "${q}"`;
+        setStatus(`Vídeos para "${cleanQuery}"`);
 
-        container.innerHTML = `
-            <div class="result-item">
-                <div class="result-site">🌐 youtube.com</div>
-                <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(q)}"
-                   target="_blank" rel="noopener noreferrer" class="result-title">
-                    ▶️ Ver vídeos de "${escapeHTML(q)}" en YouTube
-                </a>
-            </div>
+        resultsEl.innerHTML = `
+            <section>
+
+                <h2 class="section-title">
+                    ▶️ Resultados de vídeos
+                </h2>
+
+                <div class="result-item">
+
+                    <div class="result-site">
+                        🌐 youtube.com
+                    </div>
+
+                    <a
+                        href="https://www.youtube.com/results?search_query=${encodeURIComponent(cleanQuery)}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="result-title"
+                    >
+                        Ver vídeos de "${escapeHTML(cleanQuery)}" en YouTube
+                    </a>
+
+                </div>
+
+                <div class="result-item">
+
+                    <div class="result-site">
+                        🌐 www.bing.com
+                    </div>
+
+                    <a
+                        href="https://www.bing.com/videos/search?q=${encodeURIComponent(cleanQuery)}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="result-title"
+                    >
+                        Buscar vídeos en Bing
+                    </a>
+
+                </div>
+
+            </section>
         `;
+
         return;
     }
 
-    // Noticias.
+    // NOTICIAS
     if (currentMode === 'noticias') {
-        statusEl.innerText = `Noticias sobre "${q}"`;
+        setStatus(`Noticias para "${cleanQuery}"`);
 
-        container.innerHTML = `
-            <div class="result-item">
-                <div class="result-site">🌐 news.google.com</div>
-                <a href="https://news.google.com/search?q=${encodeURIComponent(q)}"
-                   target="_blank" rel="noopener noreferrer" class="result-title">
-                    📰 Noticias de "${escapeHTML(q)}"
-                </a>
-            </div>
+        resultsEl.innerHTML = `
+            <section>
+
+                <h2 class="section-title">
+                    📰 Noticias
+                </h2>
+
+                <div class="result-item">
+
+                    <div class="result-site">
+                        🌐 news.google.com
+                    </div>
+
+                    <a
+                        href="https://news.google.com/search?q=${encodeURIComponent(cleanQuery)}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="result-title"
+                    >
+                        Buscar noticias sobre "${escapeHTML(cleanQuery)}"
+                    </a>
+
+                </div>
+
+                <div class="result-item">
+
+                    <div class="result-site">
+                        🌐 bing.com/news
+                    </div>
+
+                    <a
+                        href="https://www.bing.com/news/search?q=${encodeURIComponent(cleanQuery)}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="result-title"
+                    >
+                        Buscar noticias en Bing
+                    </a>
+
+                </div>
+
+            </section>
         `;
+
         return;
     }
 
-    statusEl.innerText = `Buscando en Chronioñ y Wikipedia: "${q}"`;
+    setStatus(`Buscando "${cleanQuery}" en Chronioñ y Wikipedia...`);
 
     try {
-        // Consultar las dos fuentes al mismo tiempo.
         const [dbResults, wikiPages] = await Promise.all([
-            buscarEnDB(q),
-            buscarEnWikipedia(q).catch(error => {
+            buscarEnDB(cleanQuery),
+
+            buscarEnWikipedia(cleanQuery).catch(error => {
                 console.warn('Wikipedia:', error);
                 return [];
             })
         ]);
 
-        // Modo imágenes.
+        // Ignorar resultados de búsquedas anteriores.
+        if (requestId !== searchRequestId) return;
+
+        // IMÁGENES
         if (currentMode === 'img') {
-            let html = '';
+            const images = wikiPages
+                .filter(page => page.thumbnail?.source)
+                .map(page => ({
+                    title: page.title,
+                    image: safeURL(page.thumbnail.source),
+                    link: 'https://es.wikipedia.org/wiki/' +
+                        encodeURIComponent(page.title.replace(/ /g, '_'))
+                }))
+                .filter(item => item.image);
 
-            wikiPages.forEach(page => {
-                if (!page.thumbnail?.source) return;
+            let html = `
+                <section>
+                    <h2 class="section-title">🖼️ Imágenes de Wikipedia</h2>
+            `;
 
-                const imageURL = safeURL(page.thumbnail.source);
-                if (!imageURL) return;
+            if (images.length) {
+                html += '<div class="image-grid">';
 
+                images.forEach(item => {
+                    html += `
+                        <a
+                            class="image-result"
+                            href="${escapeHTML(item.link)}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <img
+                                src="${escapeHTML(item.image)}"
+                                alt="${escapeHTML(item.title)}"
+                                loading="lazy"
+                            >
+                            ${escapeHTML(item.title)}
+                        </a>
+                    `;
+                });
+
+                html += '</div>';
+            } else {
                 html += `
-                    <a href="${escapeHTML(imageURL)}"
-                       target="_blank" rel="noopener noreferrer"
-                       style="background:#303134;padding:8px;border-radius:8px;text-align:center;text-decoration:none;color:white;">
-                        <img src="${escapeHTML(imageURL)}"
-                             style="width:100%;height:120px;object-fit:cover;border-radius:5px;"
-                             alt="">
-                        <p>${escapeHTML(page.title)}</p>
-                    </a>
+                    <p class="status-text">
+                        No encontramos imágenes en Wikipedia para esta búsqueda.
+                    </p>
                 `;
-            });
+            }
 
-            statusEl.innerText = `Imágenes para "${q}"`;
+            html += '</section>';
 
-            container.innerHTML = html
-                ? `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;">${html}</div>`
-                : '<p class="status-text">No se encontraron imágenes.</p>';
+            resultsEl.innerHTML = html;
+
+            setStatus(`${images.length} imágenes encontradas.`);
 
             return;
         }
 
-        // Modo IA.
+        // MODO IA
         if (currentMode === 'ia') {
             let html = '';
 
@@ -468,27 +1567,65 @@ async function executeSearch(q) {
 
                 html += `
                     <div class="ai-overview-card">
-                        <div class="ai-header">✨ Visión general de Chronioñ</div>
-                        <div class="ai-content">
-                            <strong>${escapeHTML(page.title)}:</strong>
-                            ${escapeHTML(page.extract || 'Sin resumen disponible.')}
+
+                        <div class="ai-header">
+                            ✨ Vista informativa de Chronioñ
                         </div>
+
+                        <div class="ai-content">
+
+                            <strong>
+                                ${escapeHTML(page.title)}
+                            </strong>
+
+                            <p style="margin-top:9px;">
+                                ${escapeHTML(page.extract || 'Sin resumen disponible.')}
+                            </p>
+
+                        </div>
+
+                        <div class="ai-disclaimer">
+                            Fuente: Wikipedia. Este resumen es informativo y no es una respuesta generada por un modelo de IA.
+                        </div>
+
+                        <a
+                            href="https://es.wikipedia.org/wiki/${encodeURIComponent(page.title.replace(/ /g, '_'))}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="result-title"
+                            style="font-size:14px;margin-top:12px;"
+                        >
+                            Leer artículo completo →
+                        </a>
+
                     </div>
                 `;
             }
 
-            html += renderDBResults(dbResults);
-
-            if (!wikiPages.length && !dbResults.length) {
-                html = '<p class="status-text">No se encontraron resultados.</p>';
+            if (dbResults.length) {
+                html += renderDBResults(dbResults);
             }
 
-            statusEl.innerText = `Resultados de Chronioñ IA para "${q}"`;
-            container.innerHTML = html;
+            if (!wikiPages.length && !dbResults.length) {
+                html = `
+                    <div class="special-card">
+                        <div class="special-icon">🤖</div>
+                        <h2>No encontré información</h2>
+                        <p>Prueba con otras palabras o una búsqueda diferente.</p>
+                    </div>
+                `;
+            }
+
+            resultsEl.innerHTML = html;
+
+            setStatus(
+                `Modo IA · ${wikiPages.length} artículos · ${dbResults.length} sitios`
+            );
+
             return;
         }
 
-        // Modo Todo: mostrar ambas fuentes.
+        // MODO TODO
         let html = '';
 
         if (dbResults.length) {
@@ -497,271 +1634,401 @@ async function executeSearch(q) {
 
         if (wikiPages.length) {
             html += renderWikiResults(wikiPages);
-
-            if (wikiPages[0].thumbnail) {
-                generateKnowledgeGraph(wikiPages[0]);
-            }
         }
 
         if (!dbResults.length && !wikiPages.length) {
             html = `
-                <div class="result-item">
-                    <p class="status-text">
-                        No encontramos resultados en Chronioñ ni Wikipedia.
+                <div class="special-card">
+
+                    <div class="special-icon">🔎</div>
+
+                    <h2>No encontramos resultados</h2>
+
+                    <p>
+                        Chronioñ no encontró coincidencias en sus registros ni en Wikipedia.
                     </p>
-                    <a href="https://duckduckgo.com/?q=${encodeURIComponent(q)}"
-                       target="_blank" rel="noopener noreferrer"
-                       class="result-title">
-                        🔎 Buscar en DuckDuckGo
+
+                    <a
+                        href="https://duckduckgo.com/?q=${encodeURIComponent(cleanQuery)}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="result-title"
+                        style="margin-top:15px;"
+                    >
+                        Buscar en DuckDuckGo →
                     </a>
+
                 </div>
             `;
         }
 
-        container.innerHTML = html;
+        resultsEl.innerHTML = html;
 
-        statusEl.innerText =
-            `${dbResults.length} sitios registrados · ${wikiPages.length} artículos de Wikipedia`;
+        if (wikiPages.length) {
+            generateKnowledgeGraph(wikiPages[0]);
+        }
+
+        setStatus(
+            `${dbResults.length} sitios registrados · ${wikiPages.length} artículos de Wikipedia`
+        );
 
     } catch (error) {
-        console.error(error);
+        if (requestId !== searchRequestId) return;
 
-        statusEl.innerText = 'Error al realizar la búsqueda.';
-        container.innerHTML = `
-            <p class="status-text">
-                No se pudo conectar con las fuentes de Chronioñ.
-                Comprueba tu conexión e inténtalo de nuevo.
-            </p>
+        console.error('Chronioñ Search:', error);
+
+        setStatus('Error al realizar la búsqueda.');
+
+        resultsEl.innerHTML = `
+            <div class="special-card">
+
+                <div class="special-icon">⚠️</div>
+
+                <h2>Error de conexión</h2>
+
+                <p>
+                    No se pudo completar la búsqueda.
+                    Comprueba tu conexión e inténtalo otra vez.
+                </p>
+
+                <button class="special-button" onclick="executeSearch(input.value)">
+                    Reintentar
+                </button>
+
+            </div>
         `;
     }
 }
 
-// ==========================================
-// EASTER EGG AMONG US
-// ==========================================
+/* =========================================
+   MINIJUEGO AMOGUS
+   Esquiva obstáculos y recoge estrellas.
+========================================= */
 
-function renderAmogusEasterEgg(q) {
-    statusEl.innerText = `Resultado sospechoso para "${q}"`;
-    kgPanel.style.display = 'none';
+const gameOverlay = document.getElementById('amogus-game-overlay');
+const canvas = document.getElementById('amogus-canvas');
+const ctx = canvas.getContext('2d');
 
-    container.innerHTML = `
-        <div class="amogus-card">
-            <div class="amogus-title">¡AMOGUS DETECTADO!</div>
-            <p style="font-size:18px;">
-                Parece que has buscado algo muy <strong>sus</strong>.
-            </p>
-            <p style="font-size:14px;margin-top:10px;color:#ffcccc;">
-                La IA de Chronioñ ha detectado actividad de impostores.
-            </p>
-            <button class="amogus-btn" onclick="startAmogusGame()">
-                🚀 Lanzar Nave (Jugar)
-            </button>
-        </div>
-    `;
-}
+let gameLoop = null;
+let enemyTimer = null;
+let gameRunning = false;
+let gameOver = false;
+let gameScore = 0;
+let gameFrame = 0;
 
-// ==========================================
-// MINIJUEGO
-// ==========================================
+let player = {
+    x: 285,
+    y: 340,
+    width: 30,
+    height: 40,
+    speed: 6
+};
 
-let canvas, ctx, player, bullets, enemies, score, gameOver;
+let asteroids = [];
+let stars = [];
+let gameKeys = new Set();
 
 function startAmogusGame() {
-    document.getElementById('amogus-game-overlay').style.display = 'flex';
-    initAmogusGame();
-}
-
-function closeGame() {
-    document.getElementById('amogus-game-overlay').style.display = 'none';
-
-    if (gameLoop) cancelAnimationFrame(gameLoop);
-    if (enemyTimer) clearInterval(enemyTimer);
-
-    gameLoop = null;
-    enemyTimer = null;
-
-    if (keyHandler) {
-        document.removeEventListener('keydown', keyHandler);
-        keyHandler = null;
-    }
-}
-
-function initAmogusGame() {
     closeGame();
 
-    document.getElementById('amogus-game-overlay').style.display = 'flex';
+    gameOverlay.style.display = 'flex';
 
-    canvas = document.getElementById('amogus-canvas');
-    ctx = canvas.getContext('2d');
-
-    player = { x: 285, y: 350, w: 30, h: 40, speed: 7 };
-    bullets = [];
-    enemies = [];
-    score = 0;
+    gameRunning = true;
     gameOver = false;
+    gameScore = 0;
+    gameFrame = 0;
 
-    document.getElementById('game-title').innerText =
-        '¡ERES EL IMPOSTOR! Puntos: 0';
+    player.x = 285;
 
-    keyHandler = event => {
-        if (gameOver) return;
+    asteroids = [];
+    stars = [];
 
-        if (event.key === 'ArrowLeft') {
-            player.x = Math.max(0, player.x - player.speed * 2);
-        }
+    gameKeys.clear();
 
-        if (event.key === 'ArrowRight') {
-            player.x = Math.min(canvas.width - player.w, player.x + player.speed * 2);
-        }
-
-        if (event.code === 'Space') {
-            event.preventDefault();
-            bullets.push({
-                x: player.x + player.w / 2,
-                y: player.y,
-                speed: 7
-            });
-        }
-    };
-
-    document.addEventListener('keydown', keyHandler);
+    document.getElementById('game-title').textContent =
+        '🚀 PUNTOS: 0';
 
     enemyTimer = setInterval(() => {
-        if (!gameOver) {
-            enemies.push({
-                x: Math.random() * (canvas.width - 25),
-                y: -30,
-                w: 25,
-                h: 25,
-                speed: 2 + Math.random() * 2
+        if (!gameRunning || gameOver) return;
+
+        asteroids.push({
+            x: Math.random() * (canvas.width - 30),
+            y: -35,
+            size: 22 + Math.random() * 12,
+            speed: 2 + Math.random() * 2
+        });
+
+        if (Math.random() > .45) {
+            stars.push({
+                x: Math.random() * (canvas.width - 15),
+                y: -20,
+                size: 12,
+                speed: 2.5
             });
         }
-    }, 800);
+
+    }, 750);
 
     gameLoop = requestAnimationFrame(updateGame);
 }
 
-function updateGame() {
-    if (gameOver) return;
+function closeGame() {
+    gameRunning = false;
 
-    ctx.fillStyle = '#111';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.fillStyle = '#FF0000';
-    ctx.fillRect(player.x, player.y, player.w, player.h);
-
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(player.x + 5, player.y + 10, 15, 10);
-
-    // Balas.
-    ctx.fillStyle = '#00FF00';
-
-    bullets = bullets.filter(b => {
-        b.y -= b.speed;
-        ctx.fillRect(b.x, b.y, 4, 10);
-        return b.y > 0;
-    });
-
-    // Enemigos.
-    ctx.fillStyle = '#00FFFF';
-
-    enemies = enemies.filter(enemy => {
-        enemy.y += enemy.speed;
-
-        ctx.fillRect(enemy.x, enemy.y, enemy.w, enemy.h);
-
-        if (
-            enemy.y + enemy.h > player.y &&
-            enemy.x < player.x + player.w &&
-            enemy.x + enemy.w > player.x
-        ) {
-            endGame('¡FUISTE EXPULSADO! GAME OVER');
-            return false;
-        }
-
-        // Comprobar colisiones.
-        const hitIndex = bullets.findIndex(b =>
-            b.y < enemy.y + enemy.h &&
-            b.y + 10 > enemy.y &&
-            b.x > enemy.x &&
-            b.x < enemy.x + enemy.w
-        );
-
-        if (hitIndex !== -1) {
-            bullets.splice(hitIndex, 1);
-            score++;
-
-            document.getElementById('game-title').innerText =
-                `¡ERES EL IMPOSTOR! Puntos: ${score}`;
-
-            if (score >= 15) {
-                endGame('¡VICTORIA! ¡MISIÓN COMPLETADA!');
-            }
-
-            return false;
-        }
-
-        return enemy.y < canvas.height;
-    });
-
-    if (!gameOver) {
-        gameLoop = requestAnimationFrame(updateGame);
+    if (gameLoop) {
+        cancelAnimationFrame(gameLoop);
     }
+
+    if (enemyTimer) {
+        clearInterval(enemyTimer);
+    }
+
+    gameLoop = null;
+    enemyTimer = null;
+
+    gameKeys.clear();
+
+    gameOverlay.style.display = 'none';
 }
 
-function endGame(message) {
+function endGame() {
     gameOver = true;
 
-    document.getElementById('game-title').innerText = message;
+    if (enemyTimer) {
+        clearInterval(enemyTimer);
+    }
 
-    if (enemyTimer) clearInterval(enemyTimer);
     enemyTimer = null;
+
+    document.getElementById('game-title').textContent =
+        `💥 GAME OVER · PUNTOS: ${gameScore}`;
 }
 
-// ==========================================
-// PANEL DE CONOCIMIENTO
-// ==========================================
+function updateGame() {
+    if (!gameRunning || gameOver) return;
 
-function generateKnowledgeGraph(page) {
-    const image = page.thumbnail?.source;
-    const safeImage = image ? safeURL(image) : null;
+    gameFrame++;
 
-    kgPanel.style.display = 'block';
+    ctx.fillStyle = '#101010';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    kgPanel.innerHTML = `
-        <div class="knowledge-panel">
-            <div class="kg-header">
-                <div style="display:flex;align-items:center;gap:15px;">
-                    ${safeImage ? `<img src="${escapeHTML(safeImage)}"
-                        style="width:60px;height:60px;border-radius:8px;object-fit:cover;" alt="">` : ''}
-                    <div>
-                        <div class="kg-title">${escapeHTML(page.title)}</div>
-                        <div style="font-size:13px;color:#bdc1c6;">
-                            Entidad / Artículo
-                        </div>
-                    </div>
-                </div>
+    // Estrellas del fondo.
+    ctx.fillStyle = '#555';
 
-                <div class="kg-desc">
-                    ${escapeHTML((page.extract || '').substring(0, 150))}
-                </div>
-            </div>
+    for (let i = 0; i < 35; i++) {
+        const x = (i * 97) % canvas.width;
+        const y = (i * 71 + gameFrame * .5) % canvas.height;
 
-            <div class="kg-related">
-                <div style="font-size:16px;color:#fff;margin-bottom:15px;">
-                    También puedes buscar
-                </div>
+        ctx.fillRect(x, y, 2, 2);
+    }
 
-                <div class="kg-grid">
-                            <a href="search.html?q=ChatGPT" class="kg-card"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/ChatGPT_logo.svg/120px-ChatGPT_logo.svg.png"><span>ChatGPT</span></a>
-                            <a href="search.html?q=Gemini" class="kg-card"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Google_Gemini_logo.svg/120px-Google_Gemini_logo.svg.png"><span>Gemini</span></a>
-                            <a href="search.html?q=DeepSeek" class="kg-card"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/DeepSeek_logo.svg/120px-DeepSeek_logo.svg.png"><span>DeepSeek</span></a>
-                            <a href="search.html?q=Copilot" class="kg-card"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Microsoft_Copilot_Icon.svg/120px-Microsoft_Copilot_Icon.svg.png"><span>Copilot</span></a>
-                </div>
-            </div>
-        </div>
-    `;
+    // Movimiento.
+    if (gameKeys.has('ArrowLeft') || gameKeys.has('a')) {
+        player.x -= player.speed;
+    }
+
+    if (gameKeys.has('ArrowRight') || gameKeys.has('d')) {
+        player.x += player.speed;
+    }
+
+    player.x = Math.max(
+        0,
+        Math.min(canvas.width - player.width, player.x)
+    );
+
+    // Jugador.
+    ctx.fillStyle = '#ff3333';
+    ctx.fillRect(player.x, player.y, player.width, player.height);
+
+    // Visor.
+    ctx.fillStyle = '#8deaff';
+    ctx.fillRect(player.x + 7, player.y + 8, 19, 12);
+
+    // Asteroides.
+    asteroids = asteroids.filter(asteroid => {
+        asteroid.y += asteroid.speed;
+
+        ctx.fillStyle = '#a0a0a0';
+        ctx.beginPath();
+        ctx.arc(
+            asteroid.x + asteroid.size / 2,
+            asteroid.y + asteroid.size / 2,
+            asteroid.size / 2,
+            0,
+            Math.PI * 2
+        );
+        ctx.fill();
+
+        const collision =
+            asteroid.x < player.x + player.width &&
+            asteroid.x + asteroid.size > player.x &&
+            asteroid.y < player.y + player.height &&
+            asteroid.y + asteroid.size > player.y;
+
+        if (collision) {
+            endGame();
+            return false;
+        }
+
+        return asteroid.y < canvas.height;
+    });
+
+    if (gameOver) return;
+
+    // Estrellas para recoger.
+    stars = stars.filter(star => {
+        star.y += star.speed;
+
+        ctx.fillStyle = '#ffe66d';
+        ctx.font = '20px Arial';
+        ctx.fillText('★', star.x, star.y);
+
+        const collected =
+            star.x < player.x + player.width &&
+            star.x + star.size > player.x &&
+            star.y < player.y + player.height &&
+            star.y + star.size > player.y;
+
+        if (collected) {
+            gameScore += 5;
+
+            document.getElementById('game-title').textContent =
+                `🚀 PUNTOS: ${gameScore}`;
+
+            return false;
+        }
+
+        return star.y < canvas.height;
+    });
+
+    // Puntos por sobrevivir.
+    if (gameFrame % 60 === 0) {
+        gameScore++;
+
+        document.getElementById('game-title').textContent =
+            `🚀 PUNTOS: ${gameScore}`;
+    }
+
+    gameLoop = requestAnimationFrame(updateGame);
 }
-    </script>
+
+/* =========================================
+   CONTROLES DEL JUEGO
+========================================= */
+
+document.addEventListener('keydown', event => {
+    if (!gameRunning || gameOver) return;
+
+    const key = event.key.toLowerCase();
+
+    if (['arrowleft', 'arrowright', ' '].includes(key)) {
+        event.preventDefault();
+    }
+
+    gameKeys.add(key);
+});
+
+document.addEventListener('keyup', event => {
+    gameKeys.delete(event.key.toLowerCase());
+});
+
+document.getElementById('game-left').addEventListener('click', () => {
+    if (gameRunning && !gameOver) {
+        player.x = Math.max(0, player.x - 35);
+    }
+});
+
+document.getElementById('game-right').addEventListener('click', () => {
+    if (gameRunning && !gameOver) {
+        player.x = Math.min(
+            canvas.width - player.width,
+            player.x + 35
+        );
+    }
+});
+
+document.getElementById('game-restart')
+    .addEventListener('click', startAmogusGame);
+
+document.getElementById('game-close')
+    .addEventListener('click', closeGame);
+
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden && gameRunning) {
+        closeGame();
+    }
+});
+
+/* =========================================
+   ATAJOS DE TECLADO
+========================================= */
+
+// "/" enfoca el buscador.
+// Escape cierra el minijuego.
+
+document.addEventListener('keydown', event => {
+    if (
+        event.key === '/' &&
+        document.activeElement !== input
+    ) {
+        event.preventDefault();
+        input.focus();
+    }
+
+    if (event.key === 'Escape' && gameRunning) {
+        closeGame();
+    }
+});
+
+/* =========================================
+   KONAMI CODE
+   ↑ ↑ ↓ ↓ ← → ← → B A
+========================================= */
+
+const konamiCode = [
+    'ArrowUp',
+    'ArrowUp',
+    'ArrowDown',
+    'ArrowDown',
+    'ArrowLeft',
+    'ArrowRight',
+    'ArrowLeft',
+    'ArrowRight',
+    'b',
+    'a'
+];
+
+let konamiPosition = 0;
+
+document.addEventListener('keydown', event => {
+    if (gameRunning) return;
+
+    const expected = konamiCode[konamiPosition];
+
+    if (event.key === expected) {
+        konamiPosition++;
+
+        if (konamiPosition === konamiCode.length) {
+            konamiPosition = 0;
+
+            resultsEl.innerHTML = `
+                <div class="special-card chronion-card">
+                    <div class="special-icon">🎮</div>
+                    <h2>¡KONAMI CODE ACTIVADO!</h2>
+                    <p>Has encontrado un secreto clásico de los videojuegos.</p>
+                </div>
+            `;
+
+            setStatus('🎮 Código secreto descubierto');
+            clearKnowledgePanel();
+        }
+
+    } else {
+        konamiPosition = event.key === konamiCode[0] ? 1 : 0;
+    }
+});
+
+</script>
+
 </body>
 </html>
