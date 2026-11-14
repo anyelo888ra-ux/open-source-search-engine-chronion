@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0b1220">
+  <meta name="description" content="Chronioñ Maps — mapas, lugares y rutas con OpenStreetMap.">
+  <title>Chronioñ Maps</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <style>
+    :root{color-scheme:dark;--bg:#080d17;--panel:#101a2a;--panel2:#152238;--line:#26364d;--text:#edf4ff;--muted:#9aabc2;--accent:#38bdf8;--accent2:#0ea5e9;--danger:#fb7185}
+    *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    button,input{font:inherit}button{cursor:pointer;border:1px solid var(--line);border-radius:10px;background:var(--panel2);color:var(--text);padding:10px 13px;transition:.15s}button:hover{border-color:var(--accent);background:#1a2d46}button:disabled{opacity:.55;cursor:wait}
+    .app{height:100%;display:flex;flex-direction:column}.top{z-index:500;display:flex;align-items:center;gap:14px;padding:12px 18px;background:#0c1422;border-bottom:1px solid var(--line);box-shadow:0 4px 20px #0004}
+    .brand{font-size:18px;font-weight:800;letter-spacing:-.5px;white-space:nowrap}.brand span{color:var(--accent)}.tag{font-size:11px;color:var(--muted);border:1px solid var(--line);padding:3px 7px;border-radius:20px}
+    .search{display:flex;gap:8px;flex:1;max-width:760px;margin:auto}.search input,.route-input{width:100%;min-width:0;background:#080f1c;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:11px 13px;outline:none}.search input:focus,.route-input:focus{border-color:var(--accent)}
+    .primary{background:var(--accent2);border-color:var(--accent2);color:#00121d;font-weight:750}.primary:hover{background:var(--accent);color:#00121d}
+    .body{display:flex;flex:1;min-height:0}.sidebar{width:340px;max-width:42vw;background:var(--bg);border-right:1px solid var(--line);padding:16px;overflow:auto;z-index:400}
+    .section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:13px;margin-bottom:13px}.section h2{font-size:14px;margin:0 0 10px}.hint{color:var(--muted);font-size:12px;margin:8px 0 0}
+    .route-row{display:flex;gap:7px;margin:8px 0}.route-row .route-input{flex:1}.route-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+    .status{font-size:12px;color:var(--muted);min-height:18px;margin-top:9px}.status.error{color:var(--danger)}.status.good{color:#86efac}
+    .results{display:flex;flex-direction:column;gap:8px}.result{padding:10px;border:1px solid var(--line);border-radius:10px;background:#0c1524;text-align:left;width:100%}.result strong{display:block;font-size:13px}.result small{display:block;color:var(--muted);margin-top:3px}
+    #map{flex:1;min-width:0;background:#111827}.leaflet-container{font:inherit}.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#101a2a;color:var(--text)}.leaflet-popup-content{margin:10px 13px}.leaflet-control-zoom a{background:#101a2a!important;color:var(--text)!important;border-color:var(--line)!important}
+    .map-note{position:absolute;bottom:18px;right:12px;z-index:500;background:#0c1422dd;border:1px solid var(--line);border-radius:9px;padding:7px 10px;color:var(--muted);font-size:11px;pointer-events:none}
+    .icon-btn{white-space:nowrap}.mobile-toggle{display:none}
+    @media(max-width:720px){.top{flex-wrap:wrap;padding:10px}.brand{font-size:16px}.tag{display:none}.search{order:3;flex-basis:100%;max-width:none}.body{position:relative}.sidebar{position:absolute;left:0;top:0;bottom:0;width:min(88vw,340px);max-width:none;box-shadow:8px 0 24px #0005;transform:translateX(0);transition:transform .2s}.sidebar.closed{transform:translateX(-105%)}#map{width:100%}.mobile-toggle{display:inline-block}.map-note{bottom:10px;right:8px}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">Chronioñ <span>Maps</span></div>
+    <span class="tag">OpenStreetMap · Leaflet · OSRM</span>
+    <form class="search" id="searchForm">
+      <input id="placeQuery" type="search" placeholder="Buscar ciudad, dirección o lugar..." autocomplete="off" aria-label="Buscar lugar">
+      <button class="primary" id="searchButton" type="submit">Buscar</button>
+    </form>
+    <button class="icon-btn mobile-toggle" id="togglePanel" type="button" aria-label="Mostrar u ocultar panel">☰</button>
+  </header>
+  <main class="body">
+    <aside class="sidebar" id="sidebar">
+      <section class="section">
+        <h2>Explorar el mapa</h2>
+        <button id="locateButton" type="button">◎ Mi ubicación</button>
+        <p class="hint">Tu ubicación solo se solicita si pulsas el botón y aceptas el permiso del navegador.</p>
+        <div id="searchStatus" class="status" role="status" aria-live="polite"></div>
+      </section>
+      <section class="section">
+        <h2>Planificar una ruta</h2>
+        <div class="route-row"><input class="route-input" id="origin" placeholder="Punto de partida" aria-label="Punto de partida"></div>
+        <div class="route-row"><input class="route-input" id="destination" placeholder="Destino" aria-label="Destino"></div>
+        <div class="route-actions">
+          <button class="primary" id="routeButton" type="button">Calcular ruta</button>
+          <button id="clearButton" type="button">Limpiar</button>
+        </div>
+        <div id="routeStatus" class="status" role="status" aria-live="polite"></div>
+      </section>
+      <section class="section">
+        <h2>Resultados</h2>
+        <div id="results" class="results"><p class="hint">Busca un lugar para ver resultados aquí.</p></div>
+      </section>
+      <p class="hint">Los datos del mapa proceden de OpenStreetMap. La búsqueda usa Nominatim y las rutas usan el servicio público de demostración OSRM; pueden tener límites o interrupciones.</p>
+    </aside>
+    <div id="map" role="application" aria-label="Mapa interactivo"></div>
+    <div class="map-note">© OpenStreetMap contributors</div>
+  </main>
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const map = L.map('map', {zoomControl:true}).setView([20, 0], 2);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom:19,
+    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>'
+  }).addTo(map);
+
+  let searchMarkers = [];
+  let routeLayer = null;
+  let endpointMarkers = [];
+  let lastGeocodeAt = 0;
+  const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+  const setStatus = (id, message, type='') => { $(id).textContent = message; $(id).className = 'status ' + type; };
+
+  async function geocode(query) {
+    const wait = Math.max(0, 1100 - (Date.now() - lastGeocodeAt));
+    if (wait) await sleep(wait);
+    lastGeocodeAt = Date.now();
+    const url = new URL('https://nominatim.openstreetmap.org/search');
+    url.search = new URLSearchParams({q:query,format:'jsonv2',limit:'6'}).toString();
+    const response = await fetch(url, {headers:{'Accept':'application/json'}});
+    if (!response.ok) throw new Error('El servicio de búsqueda respondió con ' + response.status + '. Inténtalo más tarde.');
+    return response.json();
+  }
+
+  function clearSearchMarkers() {
+    searchMarkers.forEach(marker => map.removeLayer(marker));
+    searchMarkers = [];
+  }
+
+  function showResults(items) {
+    const container = $('results');
+    container.replaceChildren();
+    if (!items.length) {
+      const p = document.createElement('p'); p.className='hint'; p.textContent='No se encontraron lugares.'; container.append(p); return;
+    }
+    items.forEach(item => {
+      const button = document.createElement('button'); button.type='button'; button.className='result';
+      const name = document.createElement('strong'); name.textContent=item.name || item.display_name.split(',')[0];
+      const detail = document.createElement('small'); detail.textContent=item.display_name;
+      button.append(name,detail);
+      button.addEventListener('click', () => {
+        const lat=Number(item.lat), lon=Number(item.lon);
+        map.setView([lat,lon], Math.max(map.getZoom(),15));
+        const marker = searchMarkers.find(m => m.getLatLng().lat===lat && m.getLatLng().lng===lon);
+        if(marker) marker.openPopup();
+        $('origin').value ||= '';
+      });
+      container.append(button);
+    });
+  }
+
+  async function searchPlace(query) {
+    if (!query.trim()) { setStatus('searchStatus','Escribe un lugar para buscar.','error'); return; }
+    $('searchButton').disabled=true;
+    setStatus('searchStatus','Buscando lugares...');
+    try {
+      const items=await geocode(query.trim());
+      clearSearchMarkers();
+      items.forEach(item => {
+        const marker=L.marker([Number(item.lat),Number(item.lon)]).addTo(map)
+          .bindPopup('<strong></strong><br><span></span>');
+        marker.getPopup().getElement()?.querySelector('strong') && (marker.getPopup().getElement().querySelector('strong').textContent=item.name || item.display_name.split(',')[0]);
+        marker.getPopup().getElement()?.querySelector('span') && (marker.getPopup().getElement().querySelector('span').textContent=item.display_name);
+        searchMarkers.push(marker);
+      });
+      showResults(items);
+      if(items.length===1) map.setView([Number(items[0].lat),Number(items[0].lon)],15);
+      else if(items.length) map.fitBounds(L.latLngBounds(items.map(i=>[Number(i.lat),Number(i.lon)])),{padding:[35,35],maxZoom:14});
+      setStatus('searchStatus',items.length ? items.length+' resultado(s) encontrado(s).' : 'No se encontraron resultados.',items.length?'good':'');
+    } catch(error) {
+      setStatus('searchStatus',error.message || 'No se pudo completar la búsqueda.','error');
+    } finally { $('searchButton').disabled=false; }
+  }
+
+  $('searchForm').addEventListener('submit', event => {
+    event.preventDefault(); searchPlace($('placeQuery').value);
+  });
+
+  $('locateButton').addEventListener('click', () => {
+    if(!navigator.geolocation) { setStatus('searchStatus','Este navegador no ofrece geolocalización.','error'); return; }
+    setStatus('searchStatus','Solicitando permiso de ubicación...');
+    navigator.geolocation.getCurrentPosition(position => {
+      const point=[position.coords.latitude,position.coords.longitude];
+      map.setView(point,16);
+      L.marker(point).addTo(map).bindPopup('Tu ubicación aproximada según el dispositivo.').openPopup();
+      setStatus('searchStatus','Ubicación mostrada en el mapa.','good');
+    }, error => setStatus('searchStatus',error.message || 'No se pudo obtener la ubicación.','error'), {enableHighAccuracy:false,timeout:10000,maximumAge:60000});
+  });
+
+  async function resolvePoint(value) {
+    const trimmed=value.trim();
+    if(!trimmed) throw new Error('Completa el punto de partida y el destino.');
+    const coordinateMatch=trimmed.match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/);
+    if(coordinateMatch) {
+      const lat=Number(coordinateMatch[1]), lon=Number(coordinateMatch[2]);
+      if(Math.abs(lat)>90 || Math.abs(lon)>180) throw new Error('Coordenadas fuera de rango.');
+      return [lon,lat];
+    }
+    const found=await geocode(trimmed);
+    if(!found.length) throw new Error('No se encontró: '+trimmed);
+    return [Number(found[0].lon),Number(found[0].lat)];
+  }
+
+  $('routeButton').addEventListener('click', async () => {
+    const button=$('routeButton'); button.disabled=true;
+    setStatus('routeStatus','Buscando puntos y calculando ruta...');
+    try {
+      const start=await resolvePoint($('origin').value);
+      const end=await resolvePoint($('destination').value);
+      const url='https://router.project-osrm.org/route/v1/driving/'+start.join(',')+';'+end.join(',')+'?overview=full&geometries=geojson&steps=false';
+      const response=await fetch(url);
+      if(!response.ok) throw new Error('El servicio de rutas respondió con '+response.status+'.');
+      const data=await response.json();
+      if(data.code!=='Ok' || !data.routes?.length) throw new Error('No se encontró una ruta en coche entre esos puntos.');
+      if(routeLayer) map.removeLayer(routeLayer);
+      endpointMarkers.forEach(marker=>map.removeLayer(marker)); endpointMarkers=[];
+      const route=data.routes[0];
+      routeLayer=L.geoJSON(route.geometry,{style:{color:'#38bdf8',weight:6,opacity:.88}}).addTo(map);
+      endpointMarkers.push(L.marker([start[1],start[0]]).addTo(map).bindPopup('Punto de partida'));
+      endpointMarkers.push(L.marker([end[1],end[0]]).addTo(map).bindPopup('Destino'));
+      map.fitBounds(routeLayer.getBounds(),{padding:[45,45]});
+      const km=(route.distance/1000).toFixed(1);
+      const minutes=Math.round(route.duration/60);
+      const hours=Math.floor(minutes/60), mins=minutes%60;
+      setStatus('routeStatus','Ruta: '+km+' km · '+(hours?hours+' h ':'')+mins+' min aprox. (en coche).','good');
+    } catch(error) { setStatus('routeStatus',error.message || 'No se pudo calcular la ruta.','error'); }
+    finally { button.disabled=false; }
+  });
+
+  $('clearButton').addEventListener('click', () => {
+    if(routeLayer) { map.removeLayer(routeLayer); routeLayer=null; }
+    endpointMarkers.forEach(marker=>map.removeLayer(marker)); endpointMarkers=[];
+    clearSearchMarkers(); $('results').innerHTML='<p class="hint">Busca un lugar para ver resultados aquí.</p>';
+    $('origin').value=''; $('destination').value='';
+    setStatus('routeStatus',''); setStatus('searchStatus','');
+  });
+
+  $('togglePanel').addEventListener('click', () => $('sidebar').classList.toggle('closed'));
+  const params=new URLSearchParams(location.search);
+  const initialQuery=params.get('q');
+  if(initialQuery) { $('placeQuery').value=initialQuery; searchPlace(initialQuery); }
+  setTimeout(()=>map.invalidateSize(),100);
+})();
+</script>
+</body>
+</html>
