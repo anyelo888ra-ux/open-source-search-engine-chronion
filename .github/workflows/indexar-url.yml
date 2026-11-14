@@ -1,33 +1,48 @@
-name: Indexar Nueva URL
+
+name: Indexar Nuevas URLs
 
 on:
   push:
     branches:
       - main
     paths:
-      - 'url-register/template.json' # Solo se activa si el template cambia
+      - 'url-register/*.json'
+      - '!url-register/template.json'
+
+# Permitir que Chronioñ Bot actualice urls-db.json
+permissions:
+  contents: write
 
 jobs:
   indexar:
     runs-on: ubuntu-latest
+
     steps:
       - name: Descargar repositorio
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configurar Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
 
       - name: Ejecutar Bot de Indexación
         run: node url-register-index-now.js
 
-      - name: Hacer Commit de la Base de Datos actualizada
+      - name: Guardar cambios de la base de datos
         run: |
-          git config --global user.name 'Chronioñ Bot'
-          git config --global user.email 'bot@chronion.search'
-          git add urls-db.json url-register/template.json
-          git commit -m "🤖 Nueva URL indexada automáticamente" || exit 0
+          git config user.name 'Chronioñ Bot'
+          git config user.email 'bot@chronion.search'
+
+          # Agregar cambios y eliminaciones de registros procesados
+          git add -A urls-db.json url-register/
+
+          if git diff --cached --quiet; then
+            echo "No hay cambios que guardar."
+            exit 0
+          fi
+
+          git commit -m "🤖 Chronioñ: nuevas URLs indexadas"
           git push
