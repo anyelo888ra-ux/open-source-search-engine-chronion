@@ -130,9 +130,15 @@
       clearSearchMarkers();
       items.forEach(item => {
         const marker=L.marker([Number(item.lat),Number(item.lon)]).addTo(map)
-          .bindPopup('<strong></strong><br><span></span>');
-        marker.getPopup().getElement()?.querySelector('strong') && (marker.getPopup().getElement().querySelector('strong').textContent=item.name || item.display_name.split(',')[0]);
-        marker.getPopup().getElement()?.querySelector('span') && (marker.getPopup().getElement().querySelector('span').textContent=item.display_name);
+          .bindPopup(() => {
+            const content=document.createElement('div');
+            const title=document.createElement('strong');
+            const detail=document.createElement('div');
+            title.textContent=item.name || item.display_name.split(',')[0];
+            detail.textContent=item.display_name;
+            content.append(title,detail);
+            return content;
+          });
         searchMarkers.push(marker);
       });
       showResults(items);
