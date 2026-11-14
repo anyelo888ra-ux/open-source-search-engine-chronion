@@ -127,250 +127,641 @@
     </div>
 
     <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const query = urlParams.get('q');
-        const container = document.getElementById('results');
-        const statusEl = document.getElementById('status');
-        const kgPanel = document.getElementById('knowledge-panel');
-        let currentMode = 'todo';
 
-        const memeTriggers = ['amogus', 'sus', 'impostor', 'among us', 'amongus', 'vent'];
+const urlParams = new URLSearchParams(window.location.search);
+const query = urlParams.get('q') || '';
 
-        if (query) {
-            document.getElementById('searchInput').value = query;
-            document.title = `${query} - Búsqueda en Chronioñ`;
-            executeSearch(query);
-        } else {
-            statusEl.innerText = 'Escribe algo en la barra para buscar.';
-        }
+const container = document.getElementById('results');
+const statusEl = document.getElementById('status');
+const kgPanel = document.getElementById('knowledge-panel');
 
-        function switchTab(mode) {
-            currentMode = mode;
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.getElementById(`tab-${mode}`).classList.add('active');
-            if (query) executeSearch(query);
-        }
+let currentMode = 'todo';
+let gameLoop = null;
+let enemyTimer = null;
+let keyHandler = null;
 
-        // ==========================================
-        // NUEVA FUNCIÓN: BUSCAR EN LA DB LOCAL
-        // ==========================================
-        async function buscarEnDB(q) {
-            try {
-                const response = await fetch('urls-db.json');
-                const db = await response.json();
-                const lowerQ = q.toLowerCase();
-                
-                // Filtrar resultados que coincidan con la búsqueda
-                const resultados = db.filter(item => 
-                    item.title.toLowerCase().includes(lowerQ) || 
-                    item.description.toLowerCase().includes(lowerQ) ||
-                    item.url.toLowerCase().includes(lowerQ)
-                );
+const memeTriggers = [
+    'amogus', 'sus', 'impostor', 'among us', 'amongus', 'vent'
+];
 
-                if (resultados.length > 0) {
-                    let html = `<div class="status-text">Resultados de la comunidad para "${q}"</div>`;
-                    resultados.forEach(item => {
-                        html += `
-                            <div class="result-item">
-                                <div class="result-site">🌐 ${item.url}</div>
-                                <a href="${item.url}" class="result-title" target="_blank">${item.title}</a>
-                                <div class="result-snippet">${item.description}</div>
-                            </div>
-                        `;
-                    });
-                    return html;
-                }
-                return null;
-            } catch(e) { return null; }
-        }
+// Escapar texto procedente de Wikipedia o de la base de URLs.
+function escapeHTML(value) {
+    return String(value ?? '').replace(/[&<>"']/g, char => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    })[char]);
+}
 
-        async function executeSearch(q) {
-            const lowerQ = q.toLowerCase();
-            container.innerHTML = `<div class="status-text">Buscando "${q}" en la red Chronioñ...</div>`;
-            kgPanel.style.display = 'none';
+// Solo permitir enlaces HTTP y HTTPS.
+function safeURL(value) {
+    try {
+        const url = new URL(value);
+        return ['https:', 'http:'].includes(url.protocol)
+            ? url.href
+            : null;
+    } catch {
+        return null;
+    }
+}
 
-            // --- EASTER EGG DE AMONG US ---
-            if (memeTriggers.some(trigger => lowerQ.includes(trigger))) {
-                renderAmogusEasterEgg(q);
-                return;
+if (query) {
+    document.getElementById('searchInput').value = query;
+    document.title = `${query} - Búsqueda en Chronioñ`;
+    executeSearch(query);
+} else {
+    statusEl.innerText = 'Escribe algo en la barra para buscar.';
+}
+
+function switchTab(mode) {
+    currentMode = mode;
+
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+
+    document.getElementById(`tab-${mode}`).classList.add('active');
+
+    if (query) executeSearch(query);
+}
+
+// ==========================================
+// BUSCAR EN LA BASE DE DATOS DE CHRONIOÑ
+// ==========================================
+
+async function buscarEnDB(q) {
+    try {
+        const response = await fetch('urls-db.json', {
+            cache: 'no-cache'
+        });
+
+        if (!response.ok) throw new Error('No se pudo cargar urls-db.json');
+
+        const db = await response.json();
+        if (!Array.isArray(db)) return [];
+
+        const terms = q.toLowerCase().trim().split(/\s+/);
+
+        return db.map(item => {
+            if (!item || !item.url || !item.title) return null;
+
+            const title = String(item.title);
+            const description = String(item.description || '');
+            const url = String(item.url);
+
+            const searchable = `${title} ${description} ${url}`.toLowerCase();
+
+            let score = 0;
+
+            // Coincidencias por palabras.
+            for (const term of terms) {
+                if (title.toLowerCase().includes(term)) score += 5;
+                if (url.toLowerCase().includes(term)) score += 4;
+                if (description.toLowerCase().includes(term)) score += 1;
             }
 
-            // --- VIDEOS Y NOTICIAS ---
-            if (currentMode === 'videos') {
-                container.innerHTML = `<div class="status-text">Resultados de video para "${q}"</div>
-                    <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(q)}" target="_blank" class="result-item" style="display:block; text-decoration:none;">
-                        <div class="result-site">🌐 youtube.com</div>
-                        <div class="result-title">▶️ Ver videos de "${q}" en YouTube</div>
-                    </a>`;
-                return;
-            }
-            if (currentMode === 'noticias') {
-                container.innerHTML = `<div class="status-text">Últimas noticias sobre "${q}"</div>
-                    <a href="https://news.google.com/search?q=${encodeURIComponent(q)}" target="_blank" class="result-item" style="display:block; text-decoration:none;">
-                        <div class="result-site">🌐 news.google.com</div>
-                        <div class="result-title">📰 Leer noticias de "${q}" en Google News</div>
-                    </a>`;
-                return;
-            }
+            // Priorizar coincidencias exactas.
+            if (title.toLowerCase() === q.toLowerCase()) score += 15;
+            if (url.toLowerCase() === q.toLowerCase()) score += 15;
 
-            // --- BÚSQUEDA EN LA DB LOCAL (NUEVA) ---
-            const dbResults = await buscarEnDB(q);
-            if (dbResults) {
-                container.innerHTML = dbResults;
-                return;
-            }
+            return score > 0
+                ? { ...item, score }
+                : null;
+        })
+        .filter(Boolean)
+        .sort((a, b) => b.score - a.score);
 
-            // --- BÚSQUEDA EN WIKIPEDIA (FALLBACK) ---
-            try {
-                const wikiUrl = `https://es.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(q)}&gsrlimit=10&prop=extracts|pageimages&exintro&explaintext&pithumbsize=200&format=json&origin=*`;
-                const response = await fetch(wikiUrl);
-                const data = await response.json();
+    } catch (error) {
+        console.warn('Error en Chronioñ DB:', error);
+        return [];
+    }
+}
 
-                if (!data.query || !data.query.pages) {
-                    showNoResults(q);
-                    return;
-                }
+// ==========================================
+// BUSCAR EN WIKIPEDIA
+// ==========================================
 
-                const pages = Object.values(data.query.pages);
+async function buscarEnWikipedia(q) {
+    const wikiUrl =
+        `https://es.wikipedia.org/w/api.php?action=query` +
+        `&generator=search&gsrsearch=${encodeURIComponent(q)}` +
+        `&gsrlimit=10&prop=extracts|pageimages` +
+        `&exintro&explaintext&pithumbsize=200` +
+        `&format=json&origin=*`;
 
-                // --- MODO IMÁGENES ---
-                if (currentMode === 'img') {
-                    let imgHtml = `<div class="status-text">Imágenes encontradas para "${q}"</div><div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:10px;">`;
-                    let hasImages = false;
-                    pages.forEach(p => {
-                        if (p.thumbnail && p.thumbnail.source) {
-                            hasImages = true;
-                            imgHtml += `<a href="${p.thumbnail.source}" target="_blank" style="background:#303134; padding:5px; border-radius:8px; text-align:center; text-decoration:none; color:#fff;">
-                                <img src="${p.thumbnail.source}" style="width:100%; height:120px; object-fit:cover; border-radius:4px;">
-                                <p style="font-size:12px; margin-top:5px;">${p.title}</p>
-                            </a>`;
-                        }
-                    });
-                    imgHtml += `</div>`;
-                    if (!hasImages) imgHtml = `<div class="status-text">No se encontraron imágenes para "${q}".</div>`;
-                    container.innerHTML = imgHtml;
-                    return;
-                }
+    const response = await fetch(wikiUrl);
 
-                // --- MODO IA ---
-                if (currentMode === 'ia') {
-                    const mainArticle = pages[0];
-                    const aiSummary = mainArticle.extract || "No hay un resumen disponible para este término.";
-                    container.innerHTML = `
-                        <div class="ai-overview-card">
-                            <div class="ai-header"><span>✨</span> Visión general de Chronioñ IA</div>
-                            <div class="ai-content"><strong>${mainArticle.title}:</strong> ${aiSummary}</div>
-                        </div>
-                    `;
-                    statusEl.innerText = `Resultados de IA para "${q}"`;
-                    return;
-                }
+    if (!response.ok) throw new Error('Wikipedia no disponible');
 
-                // --- MODO TODO ---
-                let html = `<div class="status-text">Aproximadamente ${pages.length * 10} resultados para "${q}"</div>`;
-                
-                if (pages[0].extract) {
-                    const shortExtract = pages[0].extract.substring(0, 200) + "...";
-                    html += `<div class="ai-overview-card"><div class="ai-header"><span>✨</span> Resumen rápido de Chronioñ</div><div class="ai-content">${shortExtract}</div></div>`;
-                }
+    const data = await response.json();
 
-                pages.forEach(p => {
-                    const imgHtml = p.thumbnail ? `<img src="${p.thumbnail.source}" class="result-img">` : '';
-                    const extract = p.extract ? (p.extract.length > 200 ? p.extract.substring(0, 200) + "..." : p.extract) : "Sin descripción disponible.";
-                    html += `
-                        <div class="result-item">
-                            <div class="result-site" style="clear:both;">🌐 es.wikipedia.org/wiki/${encodeURIComponent(p.title)}</div>
-                            <a href="https://es.wikipedia.org/wiki/${encodeURIComponent(p.title)}" class="result-title" target="_blank">${p.title}</a>
-                            <div class="result-snippet">${imgHtml}${extract}</div>
-                        </div>
-                    `;
-                });
+    if (!data.query || !data.query.pages) return [];
 
-                container.innerHTML = html;
+    return Object.values(data.query.pages);
+}
 
-                if (pages[0].thumbnail) {
-                    generateKnowledgeGraph(pages[0]);
-                }
+// ==========================================
+// GENERAR RESULTADOS DE WEBS REGISTRADAS
+// ==========================================
 
-            } catch (error) {
-                statusEl.innerText = "Error de conexión con el motor.";
-                container.innerHTML = `<div class="status-text">No se pudo conectar con Chronioñ Engine.</div>`;
-            }
-        }
+function renderDBResults(results) {
+    if (!results.length) return '';
 
-        // --- FUNCIONES DEL EASTER EGG ---
-        function renderAmogusEasterEgg(q) {
-            statusEl.innerText = `Resultado altamente sospechoso para "${q}"`;
-            kgPanel.style.display = 'none';
-            container.innerHTML = `
-                <div class="amogus-card">
-                    <div class="amogus-title">¡AMOGUS DETECTADO!</div>
-                    <p style="font-size: 18px;">Parece que has buscado algo muy <strong>sus</strong>.</p>
-                    <p style="font-size: 14px; margin-top: 10px; color: #ffcccc;">La IA de Chronioñ ha detectado actividad de impostores.</p>
-                    <button class="amogus-btn" onclick="startAmogusGame()">🚀 Lanzar Nave (Jugar)</button>
+    let html = `
+        <section>
+            <h2 style="font-size:17px;margin-bottom:18px;color:#8ab4f8;">
+                🌐 Sitios registrados en Chronioñ
+            </h2>
+    `;
+
+    results.forEach(item => {
+        const url = safeURL(item.url);
+        if (!url) return;
+
+        html += `
+            <div class="result-item">
+                <div class="result-site">
+                    🌐 ${escapeHTML(new URL(url).hostname)}
                 </div>
-            `;
-        }
-        function startAmogusGame() { document.getElementById('amogus-game-overlay').style.display = 'flex'; initAmogusGame(); }
-        function closeGame() { document.getElementById('amogus-game-overlay').style.display = 'none'; if (gameLoop) cancelAnimationFrame(gameLoop); }
-        let canvas, ctx, gameLoop, player, bullets, enemies, score, gameOver;
-        function initAmogusGame() {
-            canvas = document.getElementById('amogus-canvas'); ctx = canvas.getContext('2d');
-            player = { x: 300, y: 350, w: 30, h: 40, speed: 5 }; bullets = []; enemies = []; score = 0; gameOver = false;
-            document.getElementById('game-title').innerText = "¡ERES EL IMPOSTOR! Dispara a los tripulantes 🚀";
-            document.onkeydown = (e) => {
-                if (e.key === 'ArrowLeft' && player.x > 0) player.x -= player.speed * 2;
-                if (e.key === 'ArrowRight' && player.x < canvas.width - player.w) player.x += player.speed * 2;
-                if (e.key === ' ' && !gameOver) bullets.push({ x: player.x + player.w/2, y: player.y, speed: 7 });
-            };
-            setInterval(() => { if (!gameOver) enemies.push({ x: Math.random() * (canvas.width - 30), y: -30, w: 25, h: 25, speed: 2 + Math.random() * 2 }); }, 800);
-            if (gameLoop) cancelAnimationFrame(gameLoop); gameLoop = requestAnimationFrame(updateGame);
-        }
-        function updateGame() {
-            if (gameOver) return; ctx.fillStyle = '#111'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#FF0000'; ctx.fillRect(player.x, player.y, player.w, player.h);
-            ctx.fillStyle = '#fff'; ctx.fillRect(player.x + 5, player.y + 10, 5, 10);
-            ctx.fillStyle = '#00FF00'; bullets.forEach((b, i) => { b.y -= b.speed; ctx.fillRect(b.x, b.y, 4, 10); if (b.y < 0) bullets.splice(i, 1); });
-            ctx.fillStyle = '#00FFFF'; enemies.forEach((e, i) => {
-                e.y += e.speed; ctx.fillRect(e.x, e.y, e.w, e.h);
-                if (e.y + e.h > player.y && e.x < player.x + player.w && e.x + e.w > player.x) { gameOver = true; document.getElementById('game-title').innerText = "¡FUISTE EXPULSADO! (Game Over)"; }
-                bullets.forEach((b, bi) => { if (b.y < e.y + e.h && b.y > e.y && b.x > e.x && b.x < e.x + e.w) { enemies.splice(i, 1); bullets.splice(bi, 1); score++; if (score >= 15) { gameOver = true; document.getElementById('game-title').innerText = "¡VICTORIA! Los tripulantes fueron eliminados."; } } });
+
+                <a href="${escapeHTML(url)}"
+                   class="result-title"
+                   target="_blank"
+                   rel="noopener noreferrer">
+                    ${escapeHTML(item.title)}
+                </a>
+
+                <div class="result-snippet">
+                    ${escapeHTML(item.description || 'Sin descripción disponible.')}
+                </div>
+
+                <div style="font-size:12px;color:#9aa0a6;margin-top:5px;">
+                    ${escapeHTML(item.category || 'General')}
+                    · Registrado por ${escapeHTML(item.owner || 'Comunidad')}
+                </div>
+            </div>
+        `;
+    });
+
+    html += '</section>';
+    return html;
+}
+
+// ==========================================
+// GENERAR RESULTADOS DE WIKIPEDIA
+// ==========================================
+
+function renderWikiResults(pages) {
+    if (!pages.length) {
+        return '<p class="status-text">No se encontraron artículos en Wikipedia.</p>';
+    }
+
+    let html = `
+        <section style="margin-top:25px;">
+            <h2 style="font-size:17px;margin-bottom:18px;color:#8ab4f8;">
+                📚 Resultados de Wikipedia
+            </h2>
+    `;
+
+    pages.forEach(page => {
+        const title = escapeHTML(page.title);
+        const wikiLink = `https://es.wikipedia.org/wiki/${encodeURIComponent(page.title)}`;
+
+        const extract = page.extract
+            ? page.extract.substring(0, 250) + (page.extract.length > 250 ? '...' : '')
+            : 'Sin descripción disponible.';
+
+        const image = page.thumbnail?.source
+            ? `<img src="${escapeHTML(safeURL(page.thumbnail.source) || '')}"
+                    class="result-img" alt="">`
+            : '';
+
+        html += `
+            <div class="result-item">
+                <div class="result-site">
+                    🌐 es.wikipedia.org/wiki/${encodeURIComponent(page.title)}
+                </div>
+
+                <a href="${wikiLink}"
+                   class="result-title"
+                   target="_blank"
+                   rel="noopener noreferrer">
+                    ${title}
+                </a>
+
+                <div class="result-snippet">
+                    ${image}${escapeHTML(extract)}
+                </div>
+            </div>
+        `;
+    });
+
+    html += '</section>';
+    return html;
+}
+
+// ==========================================
+// MOTOR PRINCIPAL DE BÚSQUEDA
+// ==========================================
+
+async function executeSearch(q) {
+    const lowerQ = q.toLowerCase().trim();
+
+    container.innerHTML = '';
+    statusEl.innerText = `Buscando "${q}"...`;
+    kgPanel.style.display = 'none';
+
+    if (!q.trim()) {
+        statusEl.innerText = 'Escribe algo para buscar.';
+        return;
+    }
+
+    // Easter egg.
+    if (memeTriggers.some(trigger => lowerQ.includes(trigger))) {
+        renderAmogusEasterEgg(q);
+        return;
+    }
+
+    // Vídeos.
+    if (currentMode === 'videos') {
+        statusEl.innerText = `Vídeos para "${q}"`;
+
+        container.innerHTML = `
+            <div class="result-item">
+                <div class="result-site">🌐 youtube.com</div>
+                <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(q)}"
+                   target="_blank" rel="noopener noreferrer" class="result-title">
+                    ▶️ Ver vídeos de "${escapeHTML(q)}" en YouTube
+                </a>
+            </div>
+        `;
+        return;
+    }
+
+    // Noticias.
+    if (currentMode === 'noticias') {
+        statusEl.innerText = `Noticias sobre "${q}"`;
+
+        container.innerHTML = `
+            <div class="result-item">
+                <div class="result-site">🌐 news.google.com</div>
+                <a href="https://news.google.com/search?q=${encodeURIComponent(q)}"
+                   target="_blank" rel="noopener noreferrer" class="result-title">
+                    📰 Noticias de "${escapeHTML(q)}"
+                </a>
+            </div>
+        `;
+        return;
+    }
+
+    statusEl.innerText = `Buscando en Chronioñ y Wikipedia: "${q}"`;
+
+    try {
+        // Consultar las dos fuentes al mismo tiempo.
+        const [dbResults, wikiPages] = await Promise.all([
+            buscarEnDB(q),
+            buscarEnWikipedia(q).catch(error => {
+                console.warn('Wikipedia:', error);
+                return [];
+            })
+        ]);
+
+        // Modo imágenes.
+        if (currentMode === 'img') {
+            let html = '';
+
+            wikiPages.forEach(page => {
+                if (!page.thumbnail?.source) return;
+
+                const imageURL = safeURL(page.thumbnail.source);
+                if (!imageURL) return;
+
+                html += `
+                    <a href="${escapeHTML(imageURL)}"
+                       target="_blank" rel="noopener noreferrer"
+                       style="background:#303134;padding:8px;border-radius:8px;text-align:center;text-decoration:none;color:white;">
+                        <img src="${escapeHTML(imageURL)}"
+                             style="width:100%;height:120px;object-fit:cover;border-radius:5px;"
+                             alt="">
+                        <p>${escapeHTML(page.title)}</p>
+                    </a>
+                `;
             });
-            if (!gameOver) gameLoop = requestAnimationFrame(updateGame);
+
+            statusEl.innerText = `Imágenes para "${q}"`;
+
+            container.innerHTML = html
+                ? `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;">${html}</div>`
+                : '<p class="status-text">No se encontraron imágenes.</p>';
+
+            return;
         }
-        function generateKnowledgeGraph(page) {
-            kgPanel.style.display = 'block';
-            kgPanel.innerHTML = `
-                <div class="knowledge-panel">
-                    <div class="kg-header">
-                        <div style="display:flex; align-items:center; gap:15px;">
-                            <img src="${page.thumbnail.source}" style="width:60px; height:60px; border-radius:8px; object-fit:cover;">
-                            <div><div class="kg-title">${page.title}</div><div style="font-size:13px; color:#bdc1c6;">Entidad / Artículo</div></div>
-                        </div>
-                        <div class="kg-desc">${page.extract ? page.extract.substring(0, 150) + '...' : ''}</div>
-                    </div>
-                    <div class="kg-related">
-                        <div style="font-size: 16px; color: #fff; margin-bottom: 15px;">También se buscó</div>
-                        <div class="kg-grid">
-                            <a href="search.html?q=ChatGPT" class="kg-card"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/ChatGPT_logo.svg/120px-ChatGPT_logo.svg.png"><span>ChatGPT</span></a>
-                            <a href="search.html?q=Gemini" class="kg-card"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Google_Gemini_logo.svg/120px-Google_Gemini_logo.svg.png"><span>Gemini</span></a>
-                            <a href="search.html?q=DeepSeek" class="kg-card"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/DeepSeek_logo.svg/120px-DeepSeek_logo.svg.png"><span>DeepSeek</span></a>
-                            <a href="search.html?q=Copilot" class="kg-card"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Microsoft_Copilot_Icon.svg/120px-Microsoft_Copilot_Icon.svg.png"><span>Copilot</span></a>
+
+        // Modo IA.
+        if (currentMode === 'ia') {
+            let html = '';
+
+            if (wikiPages.length) {
+                const page = wikiPages[0];
+
+                html += `
+                    <div class="ai-overview-card">
+                        <div class="ai-header">✨ Visión general de Chronioñ</div>
+                        <div class="ai-content">
+                            <strong>${escapeHTML(page.title)}:</strong>
+                            ${escapeHTML(page.extract || 'Sin resumen disponible.')}
                         </div>
                     </div>
-                </div>
-            `;
+                `;
+            }
+
+            html += renderDBResults(dbResults);
+
+            if (!wikiPages.length && !dbResults.length) {
+                html = '<p class="status-text">No se encontraron resultados.</p>';
+            }
+
+            statusEl.innerText = `Resultados de Chronioñ IA para "${q}"`;
+            container.innerHTML = html;
+            return;
         }
-        function showNoResults(q) {
-            statusEl.innerText = `Resultados directos para "${q}"`;
-            container.innerHTML = `
+
+        // Modo Todo: mostrar ambas fuentes.
+        let html = '';
+
+        if (dbResults.length) {
+            html += renderDBResults(dbResults);
+        }
+
+        if (wikiPages.length) {
+            html += renderWikiResults(wikiPages);
+
+            if (wikiPages[0].thumbnail) {
+                generateKnowledgeGraph(wikiPages[0]);
+            }
+        }
+
+        if (!dbResults.length && !wikiPages.length) {
+            html = `
                 <div class="result-item">
-                    <div class="result-site">🌐 duckduckgo.com</div>
-                    <a href="https://duckduckgo.com/?q=${encodeURIComponent(q)}" class="result-title" target="_blank">Buscar "${q}" en la Web Abierta (DuckDuckGo)</a>
-                    <div class="result-snippet">Chronioñ no tiene índices propios para esto. Te redirigimos a la web global.</div>
+                    <p class="status-text">
+                        No encontramos resultados en Chronioñ ni Wikipedia.
+                    </p>
+                    <a href="https://duckduckgo.com/?q=${encodeURIComponent(q)}"
+                       target="_blank" rel="noopener noreferrer"
+                       class="result-title">
+                        🔎 Buscar en DuckDuckGo
+                    </a>
                 </div>
             `;
         }
+
+        container.innerHTML = html;
+
+        statusEl.innerText =
+            `${dbResults.length} sitios registrados · ${wikiPages.length} artículos de Wikipedia`;
+
+    } catch (error) {
+        console.error(error);
+
+        statusEl.innerText = 'Error al realizar la búsqueda.';
+        container.innerHTML = `
+            <p class="status-text">
+                No se pudo conectar con las fuentes de Chronioñ.
+                Comprueba tu conexión e inténtalo de nuevo.
+            </p>
+        `;
+    }
+}
+
+// ==========================================
+// EASTER EGG AMONG US
+// ==========================================
+
+function renderAmogusEasterEgg(q) {
+    statusEl.innerText = `Resultado sospechoso para "${q}"`;
+    kgPanel.style.display = 'none';
+
+    container.innerHTML = `
+        <div class="amogus-card">
+            <div class="amogus-title">¡AMOGUS DETECTADO!</div>
+            <p style="font-size:18px;">
+                Parece que has buscado algo muy <strong>sus</strong>.
+            </p>
+            <p style="font-size:14px;margin-top:10px;color:#ffcccc;">
+                La IA de Chronioñ ha detectado actividad de impostores.
+            </p>
+            <button class="amogus-btn" onclick="startAmogusGame()">
+                🚀 Lanzar Nave (Jugar)
+            </button>
+        </div>
+    `;
+}
+
+// ==========================================
+// MINIJUEGO
+// ==========================================
+
+let canvas, ctx, player, bullets, enemies, score, gameOver;
+
+function startAmogusGame() {
+    document.getElementById('amogus-game-overlay').style.display = 'flex';
+    initAmogusGame();
+}
+
+function closeGame() {
+    document.getElementById('amogus-game-overlay').style.display = 'none';
+
+    if (gameLoop) cancelAnimationFrame(gameLoop);
+    if (enemyTimer) clearInterval(enemyTimer);
+
+    gameLoop = null;
+    enemyTimer = null;
+
+    if (keyHandler) {
+        document.removeEventListener('keydown', keyHandler);
+        keyHandler = null;
+    }
+}
+
+function initAmogusGame() {
+    closeGame();
+
+    document.getElementById('amogus-game-overlay').style.display = 'flex';
+
+    canvas = document.getElementById('amogus-canvas');
+    ctx = canvas.getContext('2d');
+
+    player = { x: 285, y: 350, w: 30, h: 40, speed: 7 };
+    bullets = [];
+    enemies = [];
+    score = 0;
+    gameOver = false;
+
+    document.getElementById('game-title').innerText =
+        '¡ERES EL IMPOSTOR! Puntos: 0';
+
+    keyHandler = event => {
+        if (gameOver) return;
+
+        if (event.key === 'ArrowLeft') {
+            player.x = Math.max(0, player.x - player.speed * 2);
+        }
+
+        if (event.key === 'ArrowRight') {
+            player.x = Math.min(canvas.width - player.w, player.x + player.speed * 2);
+        }
+
+        if (event.code === 'Space') {
+            event.preventDefault();
+            bullets.push({
+                x: player.x + player.w / 2,
+                y: player.y,
+                speed: 7
+            });
+        }
+    };
+
+    document.addEventListener('keydown', keyHandler);
+
+    enemyTimer = setInterval(() => {
+        if (!gameOver) {
+            enemies.push({
+                x: Math.random() * (canvas.width - 25),
+                y: -30,
+                w: 25,
+                h: 25,
+                speed: 2 + Math.random() * 2
+            });
+        }
+    }, 800);
+
+    gameLoop = requestAnimationFrame(updateGame);
+}
+
+function updateGame() {
+    if (gameOver) return;
+
+    ctx.fillStyle = '#111';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = '#FF0000';
+    ctx.fillRect(player.x, player.y, player.w, player.h);
+
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(player.x + 5, player.y + 10, 15, 10);
+
+    // Balas.
+    ctx.fillStyle = '#00FF00';
+
+    bullets = bullets.filter(b => {
+        b.y -= b.speed;
+        ctx.fillRect(b.x, b.y, 4, 10);
+        return b.y > 0;
+    });
+
+    // Enemigos.
+    ctx.fillStyle = '#00FFFF';
+
+    enemies = enemies.filter(enemy => {
+        enemy.y += enemy.speed;
+
+        ctx.fillRect(enemy.x, enemy.y, enemy.w, enemy.h);
+
+        if (
+            enemy.y + enemy.h > player.y &&
+            enemy.x < player.x + player.w &&
+            enemy.x + enemy.w > player.x
+        ) {
+            endGame('¡FUISTE EXPULSADO! GAME OVER');
+            return false;
+        }
+
+        // Comprobar colisiones.
+        const hitIndex = bullets.findIndex(b =>
+            b.y < enemy.y + enemy.h &&
+            b.y + 10 > enemy.y &&
+            b.x > enemy.x &&
+            b.x < enemy.x + enemy.w
+        );
+
+        if (hitIndex !== -1) {
+            bullets.splice(hitIndex, 1);
+            score++;
+
+            document.getElementById('game-title').innerText =
+                `¡ERES EL IMPOSTOR! Puntos: ${score}`;
+
+            if (score >= 15) {
+                endGame('¡VICTORIA! ¡MISIÓN COMPLETADA!');
+            }
+
+            return false;
+        }
+
+        return enemy.y < canvas.height;
+    });
+
+    if (!gameOver) {
+        gameLoop = requestAnimationFrame(updateGame);
+    }
+}
+
+function endGame(message) {
+    gameOver = true;
+
+    document.getElementById('game-title').innerText = message;
+
+    if (enemyTimer) clearInterval(enemyTimer);
+    enemyTimer = null;
+}
+
+// ==========================================
+// PANEL DE CONOCIMIENTO
+// ==========================================
+
+function generateKnowledgeGraph(page) {
+    const image = page.thumbnail?.source;
+    const safeImage = image ? safeURL(image) : null;
+
+    kgPanel.style.display = 'block';
+
+    kgPanel.innerHTML = `
+        <div class="knowledge-panel">
+            <div class="kg-header">
+                <div style="display:flex;align-items:center;gap:15px;">
+                    ${safeImage ? `<img src="${escapeHTML(safeImage)}"
+                        style="width:60px;height:60px;border-radius:8px;object-fit:cover;" alt="">` : ''}
+                    <div>
+                        <div class="kg-title">${escapeHTML(page.title)}</div>
+                        <div style="font-size:13px;color:#bdc1c6;">
+                            Entidad / Artículo
+                        </div>
+                    </div>
+                </div>
+
+                <div class="kg-desc">
+                    ${escapeHTML((page.extract || '').substring(0, 150))}
+                </div>
+            </div>
+
+            <div class="kg-related">
+                <div style="font-size:16px;color:#fff;margin-bottom:15px;">
+                    También puedes buscar
+                </div>
+
+                <div class="kg-grid">
+                    <a href="search.html?q=ChatGPT" class="kg-card">ChatGPT</a>
+                    <a href="search.html?q=Gemini" class="kg-card">Gemini</a>
+                    <a href="search.html?q=DeepSeek" class="kg-card">DeepSeek</a>
+                    <a href="search.html?q=Copilot" class="kg-card">Copilot</a>
+                </div>
+            </div>
+        </div>
+    `;
+}
     </script>
 </body>
 </html>
