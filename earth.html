@@ -48,6 +48,19 @@
 <div class="toast" id="toast" role="status"></div>
 <div class="loading" id="loading"><div class="loader"><strong>CHRONIOÑ EARTH</strong><div class="spinner"></div>Preparando el universo...</div></div>
 <div id="sun-glare"></div>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}
+</script>
+<script>
+/* Evita dejar al usuario atrapado en la pantalla de carga si falla un CDN o WebGL. */
+setTimeout(()=>{
+  const loading=document.getElementById('loading');
+  if(loading && !loading.classList.contains('hidden')){
+    const loader=loading.querySelector('.loader');
+    if(loader) loader.innerHTML='<strong>CHRONIOÑ EARTH</strong><p style="max-width:320px;line-height:1.6;color:#9aaac2">No se pudo iniciar el motor 3D. Comprueba tu conexión, que WebGL esté activado y vuelve a intentarlo.</p><button class="btn primary" onclick="location.reload()">Reintentar</button>';
+  }
+},20000);
+</script>
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js';
