@@ -24,6 +24,12 @@
     #map{flex:1;min-width:0;background:#111827}.leaflet-container{font:inherit}.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#101a2a;color:var(--text)}.leaflet-popup-content{margin:10px 13px}.leaflet-control-zoom a{background:#101a2a!important;color:var(--text)!important;border-color:var(--line)!important}
     .map-note{position:absolute;bottom:18px;right:12px;z-index:500;background:#0c1422dd;border:1px solid var(--line);border-radius:9px;padding:7px 10px;color:var(--muted);font-size:11px;pointer-events:none}
     .icon-btn{white-space:nowrap}.mobile-toggle{display:none}
+    .street-modal{position:fixed;inset:0;z-index:1200;background:#050a12f2;display:none;flex-direction:column;padding:14px;gap:10px}
+    .street-modal.open{display:flex}.street-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .street-head strong{font-size:16px}.street-head small{display:block;color:var(--muted);font-size:11px;margin-top:3px}
+    #streetViewer{display:block;flex:1;min-height:0;width:100%;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#0b1422}
+    #streetViewer pnx-viewer{display:block;width:100%;height:100%}
+    @media(max-width:720px){.street-modal{padding:8px}.street-head strong{font-size:14px}}
     @media(max-width:720px){.top{flex-wrap:wrap;padding:10px}.brand{font-size:16px}.tag{display:none}.search{order:3;flex-basis:100%;max-width:none}.body{position:relative}.sidebar{position:absolute;left:0;top:0;bottom:0;width:min(88vw,340px);max-width:none;box-shadow:8px 0 24px #0005;transform:translateX(0);transition:transform .2s}.sidebar.closed{transform:translateX(-105%)}#map{width:100%}.mobile-toggle{display:inline-block}.map-note{bottom:10px;right:8px}}
   </style>
 </head>
@@ -44,6 +50,8 @@
         <h2>Explorar el mapa</h2>
         <button id="locateButton" type="button">◎ Mi ubicación</button>
         <p class="hint">Tu ubicación solo se solicita si pulsas el botón y aceptas el permiso del navegador.</p>
+        <button id="streetButton" type="button" style="margin-top:10px;width:100%">📷 Street View 360°</button>
+        <p class="hint">Explora fotografías panorámicas comunitarias cuando haya cobertura.</p>
         <div id="searchStatus" class="status" role="status" aria-live="polite"></div>
       </section>
       <section class="section">
@@ -66,6 +74,14 @@
     <div class="map-note">© OpenStreetMap contributors</div>
   </main>
 </div>
+<div class="street-modal" id="streetModal" aria-label="Street View panorámico">
+  <div class="street-head">
+    <div><strong>📷 Chronioñ Street View</strong><small>Panoramas 360° de Panoramax · cobertura comunitaria</small></div>
+    <button id="closeStreet" type="button">✕ Cerrar</button>
+  </div>
+  <div id="streetViewer"><pnx-viewer endpoint="https://api.panoramax.xyz/api" metacatalog="https://explore.panoramax.fr" lang="es"></pnx-viewer></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@panoramax/web-viewer@5.0.0/build/cjs/index.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
 (() => {
@@ -214,6 +230,10 @@
   });
 
   $('togglePanel').addEventListener('click', () => $('sidebar').classList.toggle('closed'));
+  const streetModal=$('streetModal');
+  $('streetButton').addEventListener('click',()=>streetModal.classList.add('open'));
+  $('closeStreet').addEventListener('click',()=>streetModal.classList.remove('open'));
+  document.addEventListener('keydown',event=>{if(event.key==='Escape')streetModal.classList.remove('open')});
   const params=new URLSearchParams(location.search);
   const initialQuery=params.get('q');
   if(initialQuery) { $('placeQuery').value=initialQuery; searchPlace(initialQuery); }
