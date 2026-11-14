@@ -14,5 +14,132 @@
     "category": "Tecnología",
     "owner": "anyelo888ra-ux",
     "date": "2026-11-12T00:00:00.000Z"
+  },
+  {
+    "url": "https://chatgpt.com",
+    "title": "ChatGPT",
+    "description": "Asistente de inteligencia artificial para conversar, aprender, escribir y resolver problemas.",
+    "category": "Inteligencia Artificial",
+    "owner": "OpenAI",
+    "date": "2026-11-13T00:00:00.000Z"
+  },
+  {
+    "url": "https://google.com",
+    "title": "Google",
+    "description": "Motor de búsqueda para encontrar páginas web, imágenes, noticias y vídeos.",
+    "category": "Buscadores",
+    "owner": "Google",
+    "date": "2026-11-13T00:00:00.000Z"
+  },
+  {
+    "url": "https://bing.com",
+    "title": "Microsoft Bing",
+    "description": "Buscador web de Microsoft para encontrar información, imágenes y noticias.",
+    "category": "Buscadores",
+    "owner": "Microsoft",
+    "date": "2026-11-13T00:00:00.000Z"
+  },
+  {
+    "url": "https://duckduckgo.com",
+    "title": "DuckDuckGo",
+    "description": "Motor de búsqueda centrado en la privacidad.",
+    "category": "Buscadores",
+    "owner": "DuckDuckGo",
+    "date": "2026-11-13T00:00:00.000Z"
+  },
+  {
+    "url": "https://wikipedia.org",
+    "title": "Wikipedia",
+    "description": "Enciclopedia libre y colaborativa con artículos de numerosos temas.",
+    "category": "Conocimiento",
+    "owner": "Wikimedia Foundation",
+    "date": "2026-11-13T00:00:00.000Z"
+  },
+  {
+    "url": "https://youtube.com",
+    "title": "YouTube",
+    "description": "Plataforma para ver, publicar y compartir vídeos.",
+    "category": "Vídeos",
+    "owner": "Google",
+    "date": "2026-11-13T00:00:00.000Z"
+  },
+  {
+    "url": "https://github.com",
+    "title": "GitHub",
+    "description": "Plataforma para alojar código y colaborar en proyectos.",
+    "category": "Desarrollo",
+    "owner": "GitHub",
+    "date": "2026-11-13T00:00:00.000Z"
+  },
+  {
+    "url": "https://developer.mozilla.org",
+    "title": "MDN Web Docs",
+    "description": "Documentación para aprender HTML, CSS, JavaScript y tecnologías web.",
+    "category": "Desarrollo",
+    "owner": "Mozilla",
+    "date": "2026-11-13T00:00:00.000Z"
+  },
+  {
+    "url": "https://stackoverflow.com",
+    "title": "Stack Overflow",
+    "description": "Comunidad de preguntas y respuestas sobre programación.",
+    "category": "Desarrollo",
+    "owner": "Stack Exchange",
+    "date": "2026-11-13T00:00:00.000Z"
+  },
+  {
+    "url": "https://gemini.google.com",
+    "title": "Google Gemini",
+    "description": "Asistente de inteligencia artificial de Google.",
+    "category": "Inteligencia Artificial",
+    "owner": "Google",
+    "date": "2026-11-13T00:00:00.000Z"
+  },
+  {
+    "url": "https://claude.ai",
+    "title": "Claude",
+    "description": "Asistente de inteligencia artificial de Anthropic.",
+    "category": "Inteligencia Artificial",
+    "owner": "Anthropic",
+    "date": "2026-11-13T00:00:00.000Z"
+  },
+  {
+    "url": "https://copilot.microsoft.com",
+    "title": "Microsoft Copilot",
+    "description": "Asistente de inteligencia artificial de Microsoft.",
+    "category": "Inteligencia Artificial",
+    "owner": "Microsoft",
+    "date": "2026-11-13T00:00:00.000Z"
+  },
+  {
+    "url": "https://www.deepseek.com",
+    "title": "DeepSeek",
+    "description": "Plataforma de inteligencia artificial para conversación y programación.",
+    "category": "Inteligencia Artificial",
+    "owner": "DeepSeek",
+    "date": "2026-11-13T00:00:00.000Z"
+  },
+  {
+    "url": "https://khanacademy.org",
+    "title": "Khan Academy",
+    "description": "Plataforma educativa gratuita con lecciones y ejercicios.",
+    "category": "Educación",
+    "owner": "Khan Academy",
+    "date": "2026-11-13T00:00:00.000Z"
+  },
+  {
+    "url": "https://mozilla.org",
+    "title": "Mozilla",
+    "description": "Organización que desarrolla tecnologías para una web abierta.",
+    "category": "Tecnología",
+    "owner": "Mozilla",
+    "date": "2026-11-13T00:00:00.000Z"
+  },
+  {
+    "url": "https://reddit.com",
+    "title": "Reddit",
+    "description": "Plataforma de comunidades, publicaciones y conversaciones.",
+    "category": "Comunidades",
+    "owner": "Reddit",
+    "date": "2026-11-13T00:00:00.000Z"
   }
-]
